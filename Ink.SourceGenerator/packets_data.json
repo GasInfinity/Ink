@@ -1,0 +1,1421 @@
+{
+    "common": {
+        "serverbound": {
+            "keep_alive": {
+                "fields": {
+                    "KeepAliveId": "Int64"
+                } 
+            },
+            "pong": {
+                "fields": {
+                    "Payload": "Int32"
+                }
+            },
+            "ping_request": {
+                "fields": {
+                    "Payload": "Int64"
+                } 
+            },
+            "cookie_response": {
+                "fields": {
+                    "Key": "Identifier",
+                    "Payload": "UInt8[]?"
+                }
+            },
+            "custom_payload": {
+                "fields": {
+                    "Channel": "Identifier",
+                    "Data": "UInt8[?]"
+                }
+            },
+            "custom_query_answer": {
+                "fields": {
+                    "MessageId": "VarInt",
+                    "Data": "UInt8[?]?"
+                }
+            },
+            "resource_pack": {
+                "fields": {
+                    "ResourceUuid": "Uuid",
+                    "Result": "VarInt (ResourcePackResult)"
+                }
+            },
+            "client_information": {
+                "fields": {
+                    "Locale": "String (16)",
+                    "ViewDistance": "UInt8",
+                    "ClientChatMode": "VarInt (ChatMode)",
+                    "ChatColors": "Bool",
+                    "DisplayedSkinParts": "UInt8 (PlayerSkinPart)",
+                    "MainHand": "VarInt (PlayerMainHand)",
+                    "EnableTextFiltering": "Bool",
+                    "AllowServerListings": "Bool"
+                }
+            } 
+        },
+        "clientbound": {
+            "keep_alive": {
+                "fields": {
+                    "KeepAliveId": "Int64"
+                } 
+            },
+            "disconnect": {
+                "fields": {
+                    "Reason": "TextPart"
+                }
+            },
+            "ping": {
+                "fields": {
+                    "Payload": "Int32"
+                }
+            },
+            "pong_response": {
+                "fields": {
+                    "Payload": "Int64"
+                }
+            },
+            "cookie_request": {
+                "fields": {
+                    "Key": "Identifier"
+                }
+            },
+            "store_cookie": {
+                "fields": {
+                    "Key": "Identifier",
+                    "Payload": "UInt8[]"
+                }
+            },
+            "custom_payload": {
+                "fields": {
+                    "Channel": "Identifier",
+                    "Data": "UInt8[?]"
+                }
+            },
+            "custom_query": {
+                "fields": {
+                    "MessageId": "VarInt",
+                    "Channel": "Identifier",
+                    "Data": "UInt8[?]"
+                }
+            },
+            "transfer": {
+                "fields": {
+                    "Host": "String",
+                    "Port": "VarInt"
+                }
+            },
+            "server_links": {
+                "fields": {
+                    "Links": "ServerLink[]"
+                }
+            },
+            "custom_report_details": {
+                "fields": {
+                    "Details": "ReportDetail[]"
+                }
+            },
+            "update_tags": {
+                "fields": {
+                    "Tags": "RegistryTags[]"
+                }
+            },
+            "resource_pack_pop": {
+                "fields": {
+                    "ResourceUuid": "Uuid?"
+                }
+            },
+            "resource_pack_push": {
+                "fields": {
+                    "ResourceUuid": "Uuid",
+                    "Url": "String (32767)",
+                    "Hash": "String (40)",
+                    "Forced": "Bool",
+                    "PromptMessage": "TextPart?"
+                }
+            }
+        }
+    },
+    "handshake": {
+        "serverbound": {
+            "intention": {
+                "fields": {
+                    "ProtocolVersion": "VarInt (MinecraftProtocol)",
+                    "ServerAddress": "String (255)",
+                    "ServerPort": "UInt16",
+                    "NextState": "VarInt (NetworkState)"
+                }
+            }
+        }
+    },
+    "status": {
+        "clientbound": {
+            "status_response": {
+                "fields": {
+                    "Response": "ServerStatus"
+                }
+            },
+            "pong_response": null
+        },
+        "serverbound": {
+            "status_request": {},
+            "ping_request": null
+        }
+    },
+    "login": {
+        "clientbound": {
+            "login_disconnect": {
+                "fields": {
+                    "Reason": "JsonTextPart"
+                }
+            },
+            "hello": {
+                "fields": {
+                    "ServerId": "String (20)",
+                    "PublicKey": "UInt8[]",
+                    "VerifyToken": "UInt8[]",
+                    "ShouldAuthenticate": "Bool"
+                }
+            },
+            "login_finished": {
+                "fields": {
+                    "Profile": "GameProfile"
+                }
+            },
+            "login_compression": {
+                "fields": {
+                    "Threshold": "VarInt"
+                }
+            },
+            "custom_query": null,
+            "cookie_request": null
+        },
+        "serverbound": {
+            "hello": {
+                "fields": {
+                    "Name": "String (16)",
+                    "PlayerUuid": "Uuid"
+                }
+            },
+            "key": {
+                "fields": {
+                    "SharedSecret": "UInt8[]",
+                    "VerifyToken": "UInt8[]"
+                }
+            },
+            "custom_query_answer": null,
+            "login_acknowledged": {},
+            "cookie_response": null
+        }
+    },
+    "configuration": {
+        "clientbound": {
+            "cookie_request": null,
+            "custom_payload": null,
+            "disconnect": null,
+            "finish_configuration": {},
+            "keep_alive": null,
+            "ping": null,
+            "reset_chat": {},
+            "registry_data": {
+                "fields": {
+                    "Registry": "SyncedRegistry"
+                }
+            },
+            "resource_pack_pop": null,
+            "resource_pack_push": null,
+            "store_cookie": null,
+            "transfer": null,
+            "update_enabled_features": {
+                "fields": {
+                    "FeatureFlags": "Identifier[]"
+                }
+            },
+            "update_tags": null,
+            "select_known_packs": {
+                "fields": {
+                    "KnownPacks": "VersionedIdentifier[]"
+                }
+            },
+            "custom_report_details": null,
+            "server_links": null
+        },
+        "serverbound": {
+            "client_information": null,
+            "cookie_response": null,
+            "custom_payload": null,
+            "finish_configuration": {},
+            "keep_alive": null,
+            "pong": null,
+            "resource_pack": null,
+            "select_known_packs": {
+                "fields": {
+                    "KnownPacks": "VersionedIdentifier[]"
+                }
+            }
+        }
+    },
+    "play": {
+        "clientbound": {
+            "bundle_delimiter": {},
+            "add_entity": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "EntityUuid": "Uuid",
+                    "Type": "VarInt",
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "Pitch": "UInt8 (Angle)",
+                    "Yaw": "UInt8 (Angle)",
+                    "HeadYaw": "UInt8 (Angle)",
+                    "Data": "VarInt",
+                    "VelocityX": "Int16",
+                    "VelocityY": "Int16",
+                    "VelocityZ": "Int16"
+                }
+            },
+            "add_experience_orb": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "Count": "Int16"
+                }
+            },
+            "animate": {
+                "fields": {
+                    "EntityId": "VarInt", 
+                    "AnimationId": "UInt8"
+                }
+            },
+            "award_stats": {
+                "fields": {
+                    "Statistics": "Statistic[]"
+                }
+            },
+            "block_changed_ack": {
+                "fields": {
+                    "SequenceId": "VarInt"
+                }
+            },
+            "block_destruction": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "Location": "BlockPosition",
+                    "DestroyStage": "UInt8"
+                }
+            },
+            "block_entity_data": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "Type": "VarInt",
+                    "NBTData": "NbtTag"
+                }
+            },
+            "block_event": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "ActionId": "UInt8",
+                    "ActionParameter": "UInt8",
+                    "BlockType": "VarInt"
+                }
+            },
+            "block_update": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "BlockId": "VarInt"
+                }
+            },
+            "boss_event": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "change_difficulty": {
+                "fields": {
+                    "Difficulty": "UInt8",
+                    "DifficultyLocked": "Bool"
+                }
+            },
+            "chunk_batch_finished": {
+                "fields": {
+                    "BatchSize": "VarInt"
+                }
+            },
+            "chunk_batch_start": {},
+            "chunks_biomes": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "clear_titles": {
+                "fields": {
+                    "Reset": "Bool"
+                }
+            },
+            "command_suggestions": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "commands": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "container_close": {
+                "fields": {
+                    "WindowId": "VarInt"
+                }
+            },
+            "container_set_content": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "StateId": "VarInt",
+                    "SlotData": "ItemStack[]",
+                    "CarriedItem": "ItemStack"
+                }
+            },
+            "container_set_data": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "Property": "Int16",
+                    "Value": "Int16"
+                }
+            },
+            "container_set_slot": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "StateId": "VarInt",
+                    "Slot": "Int16",
+                    "SlotData": "ItemStack"
+                }
+            },
+            "cookie_request": null,
+            "cooldown": {
+                "fields": {
+                    "ItemId": "VarInt",
+                    "CooldownTicks": "VarInt"
+                }
+            },
+            "custom_chat_completions": {
+                "fields": {
+                    "Action": "VarInt",
+                    "Entries": "String[]"
+                }
+            },
+            "custom_payload": null,
+            "damage_event": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "debug_sample": {
+                "fields": {
+                    "Samples": "Int64[]",
+                    "SampleType": "VarInt"
+                }
+            },
+            "delete_chat": {
+                "fields": {
+                    "MessageId": "VarInt",
+                    "Signature": "UInt8[256]?"
+                }
+            },
+            "disconnect": null,
+            "disguised_chat": {
+                "fields": {
+                    "Message": "TextPart",
+                    "ChatType": "VarInt",
+                    "SenderName": "TextPart",
+                    "TargetName": "TextPart?"
+                }
+            },
+            "entity_event": {
+                "fields": {
+                    "EntityId": "Int32",
+                    "Status": "UInt8"
+                }
+            },
+            "entity_position_sync": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "VelocityX": "Double",
+                    "VelocityY": "Double",
+                    "VelocityZ": "Double",
+                    "Yaw": "Single",
+                    "Pitch": "Single",
+                    "OnGround": "Bool"
+                }
+            },
+            "explode": {
+                "fields": {
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "HasPlayerVelocity": "Bool",
+                    "PlayerVelocityX": "Double {HasPlayerVelocity}",
+                    "PlayerVelocityY": "Single {HasPlayerVelocity}",
+                    "PlayerVelocityZ": "Single {HasPlayerVelocity}",
+                    "ExplosionParticleId": "VarInt",
+                    "ExplosionParticleData": "ParticleData",
+                    "ExplosionSound": "Id (SoundEvent)"
+                }
+            },
+            "forget_level_chunk": {
+                "fields": {
+                    "ChunkZ": "Int32",
+                    "ChunkX": "Int32"
+                }
+            },
+            "game_event": {
+                "fields": {
+                    "Event": "UInt8",
+                    "Value": "Single"
+                }
+            },
+            "horse_screen_open": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "SlotCound": "VarInt",
+                    "EntityId": "Int32"
+                }
+            },
+            "hurt_animation": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "Yaw": "Single"
+                }
+            },
+            "initialize_border": {
+                "fields": {
+                    "X": "Double",
+                    "Z": "Double",
+                    "OldDiameter": "Double",
+                    "NewDiameter": "Double",
+                    "Speed": "VarLong",
+                    "PortalTeleportBoundary": "VarInt",
+                    "WarningBlocks": "VarInt",
+                    "WarningTime": "VarInt"
+                }
+            },
+            "keep_alive": null,
+            "level_chunk_with_light": {
+                "fields": {
+                    "ChunkX": "Int32",
+                    "ChunkY": "Int32",
+                    "Data": "ChunkData",
+                    "Light": "LightData"
+                }
+            },
+            "level_event": {
+                "fields": {
+                    "Event": "Int32",
+                    "Location": "BlockPosition",
+                    "Data": "Int32",
+                    "DisableRelativeVolume": "Bool"
+                }
+            },
+            "level_particles": {
+                "fields": {
+                    "LongDistance": "Bool",
+                    "AlwaysVisible": "Bool",
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "OffsetX": "Single",
+                    "OffsetY": "Single",
+                    "OffsetZ": "Single",
+                    "MaxSpeed": "Single",
+                    "ParticleCount": "Int32",
+                    "ParticleId": "VarInt",
+                    "Data": "ParticleData"
+                }
+            },
+            "light_update": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "login": {
+                "fields": {
+                    "EntityId": "Int32",
+                    "IsHardcore": "Bool",
+                    "DimensionNames": "Identifier[]",
+                    "MaxPlayers": "VarInt",
+                    "ViewDistance": "VarInt",
+                    "SimulationDistance": "VarInt",
+                    "ReducedDebugInfo": "Bool",
+                    "EnableRespawnScreen": "Bool",
+                    "DoLimitedCrafting": "Bool",
+                    "DimensionType": "VarInt",
+                    "DimensionName": "Identifier",
+                    "HashedSeed": "Int64",
+                    "GameMode": "UInt8 (GameMode)",
+                    "PreviousGameMode": "UInt8 (GameMode)",
+                    "IsDebug": "Bool",
+                    "IsFlat": "Bool",
+                    "HasDeathLocation": "Bool",
+                    "DeathDimensionName": "Identifier {HasDeathLocation}",
+                    "DeathLocation": "BlockPosition {HasDeathLocation}",
+                    "PortalCooldown": "VarInt",
+                    "SeaLevel": "VarInt",
+                    "EnforcesSecureChat": "Bool"
+                }
+            },
+            "map_item_data": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "merchant_offers": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "move_entity_pos": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "DeltaX": "Int16",
+                    "DeltaY": "Int16",
+                    "DeltaZ": "Int16",
+                    "OnGround": "Bool"
+                }
+            },
+            "move_entity_rot": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "Yaw": "UInt8 (Angle)",
+                    "Pitch": "UInt8 (Angle)",
+                    "OnGround": "Bool"
+                }
+            },
+            "move_entity_pos_rot": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "DeltaX": "Int16",
+                    "DeltaY": "Int16",
+                    "DeltaZ": "Int16",
+                    "Yaw": "UInt8 (Angle)",
+                    "Pitch": "UInt8 (Angle)",
+                    "OnGround": "Bool"
+                }
+            },
+            "move_minecart_along_track": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "move_vehicle": {
+                "fields": {
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "Yaw": "Single",
+                    "Pitch": "Single"
+                }
+            },
+            "open_book": {
+                "fields": {
+                    "Hand": "VarInt"
+                }
+            },
+            "open_screen": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "WindowType": "VarInt",
+                    "WindowTitle": "TextPart"
+                }
+            },
+            "open_sign_editor": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "IsFrontText": "Bool"
+                }
+            },
+            "ping": null,
+            "pong_response": null,
+            "place_ghost_recipe": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "RecipeDisplayTodo": "UInt8"
+                }
+            },
+            "player_abilities": {
+                "fields": {
+                    "Flags": "UInt8",
+                    "FlyingSpeed": "Single",
+                    "FieldOfViewModifier": "Single"
+                }
+            },
+            "player_chat": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "player_combat_end": {
+                "fields": {
+                    "Duration": "VarInt"
+                }
+            },
+            "player_combat_enter": {},
+            "player_combat_kill": {
+                "fields": {
+                    "PlayerId": "VarInt",
+                    "Message": "TextPart"
+                }
+            },
+            "player_info_remove": {
+                "fields": {
+                    "Players": "Uuid[]"
+                }
+            },
+            "player_info_update": {
+                "fields": {
+                    "Info": "PlayersInfo"
+                }
+            },
+            "player_look_at": {
+                "fields": {
+                    "FeetEyes": "VarInt",
+                    "TargetX": "Double",
+                    "TargetY": "Double",
+                    "TargetZ": "Double",
+                    "IsEntity": "Bool",
+                    "EntityId": "VarInt {IsEntity}",
+                    "EntityFeetEyes": "VarInt {IsEntity}"
+                }
+            },
+            "player_position": {
+                "fields": {
+                    "TeleportId": "VarInt",
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "VelocityX": "Double",
+                    "VelocityY": "Double",
+                    "VelocityZ": "Double",
+                    "Yaw": "Single",
+                    "Pitch": "Single",
+                    "Flags": "Int32"
+                }
+            },
+            "player_rotation": {
+                "fields": {
+                    "Yaw": "Single",
+                    "Pitch": "Single"
+                }
+            },
+            "recipe_book_add": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "recipe_book_remove": {
+                "fields": {
+                    "Recipes": "VarInt[]"
+                }
+            },
+            "recipe_book_settings": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "remove_entities": {
+                "fields": {
+                    "EntityIds": "VarInt[]"
+                }
+            },
+            "remove_mob_effect": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "EffectId": "VarInt"
+                }
+            },
+            "reset_score": {
+                "fields": {
+                    "EntityName": "String",
+                    "ObjectiveName": "String?"
+                }
+            },
+            "resource_pack_pop": null,
+            "resource_pack_push": null,
+            "respawn": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "rotate_head": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "HeadYaw": "UInt8 (Angle)"
+                }
+            },
+            "section_blocks_update": {
+                "fields": {
+                    "ChunkSectionPosition": "SectionPosition",
+                    "Blocks": "VarLong[]"
+                }
+            },
+            "select_advancements_tab": {
+                "fields": {
+                    "Tab": "Identifier?"
+                }
+            },
+            "server_data": {
+                "fields": {
+                    "Modtd": "TextPart",
+                    "Icon": "UInt8[]?"
+                }
+            },
+            "set_action_bar_text": {
+                "fields": {
+                    "Text": "TextPart"
+                }
+            },
+            "set_border_center": {
+                "fields": {
+                    "X": "Double",
+                    "Z": "Double"
+                }
+            },
+            "set_border_lerp_size": {
+                "fields": {
+                    "OldDiameter": "Double",
+                    "NewDiameter": "Double",
+                    "Speed": "VarLong"
+                }
+            },
+            "set_border_size": {
+                "fields": {
+                    "Diameter": "Double"
+                }
+            },
+            "set_border_warning_delay": {
+                "fields": {
+                    "WarningTime": "VarInt"
+                }
+            },
+            "set_border_warning_distance": {
+                "fields": {
+                    "WarningBlocks": "VarInt"
+                }
+            },
+            "set_camera": {
+                "fields": {
+                    "CameraId": "VarInt"
+                }
+            },
+            "set_chunk_cache_center": {
+                "fields": {
+                    "ChunkX": "VarInt",
+                    "ChunkZ": "VarInt"
+                }
+            },
+            "set_chunk_cache_radius": {
+                "fields": {
+                    "ViewDistance": "VarInt"
+                }
+            },
+            "set_cursor_item": {
+                "fields": {
+                    "CarriedItem": "ItemStack"
+                }
+            },
+            "set_default_spawn_position": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "Angle": "Single"
+                }
+            },
+            "set_display_objective": {
+                "fields": {
+                    "Position": "VarInt",
+                    "ScoreName": "String (32767)"
+                }
+            },
+            "set_entity_data": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "MetadataTodo": "UInt8"
+                }
+            },
+            "set_entity_link": {
+                "fields": {
+                    "AttachedEntityId": "Int32",
+                    "HoldingEntityId": "Int32"
+                }
+            },
+            "set_entity_motion": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "VelocityX": "Int16",
+                    "VelocityY": "Int16",
+                    "VelocityZ": "Int16"
+                }
+            },
+            "set_equipment": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "Equipment": "EquipmentData"
+                }
+            },
+            "set_experience": {
+                "fields": {
+                    "ExperienceBar": "Single",
+                    "Level": "VarInt",
+                    "TotalExperience": "VarInt"
+                }
+            },
+            "set_health": {
+                "fields": {
+                    "Health": "Single",
+                    "Food": "VarInt",
+                    "FoodSaturation": "Single"
+                }
+            },
+            "set_held_slot": {
+                "fields": {
+                    "Slot": "VarInt"
+                }
+            },
+            "set_objective": {
+                "fields": {
+                    "ObjectiveName": "String (32767)",
+                    "Mode": "UInt8",
+                    "Scoreboard": "ScoreboardData {Mode = 0/2}"
+                }
+            },
+            "set_passengers": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "Passengers": "VarInt[]"
+                }
+            },
+            "set_player_inventory": {
+                "fields": {
+                    "Slot": "VarInt",
+                    "SlotData": "ItemStack"
+                }
+            },
+            "set_player_team": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "set_score": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "set_simulation_distance": {
+                "fields": {
+                    "SimulationDistance": "VarInt"
+                }
+            },
+            "set_subtitle_text": {
+                "fields": {
+                    "SubtitleText": "TextPart"
+                }
+            },
+            "set_time": {
+                "fields": {
+                    "WorldAge": "Int64",
+                    "TimeOfDay": "Int64",
+                    "TimeOfDayIncreasing": "Bool"
+                }
+            },
+            "set_title_text": {
+                "fields": {
+                    "TitleText": "TextPart"
+                }
+            },
+            "set_titles_animation": {
+                "fields": {
+                    "FadeIn": "Int32",
+                    "Stay": "Int32",
+                    "FadeOut": "Int32"
+                }
+            },
+            "sound_entity": {
+                "fields": {
+                    "Event": "Id (SoundEvent)",
+                    "SoundCategory": "VarInt",
+                    "EntityId": "VarInt",
+                    "Volume": "Single",
+                    "Pitch": "Single",
+                    "Seed": "Int64"
+                }
+            },
+            "sound": {
+                "fields": {
+                    "Event": "Id (SoundEvent)",
+                    "SoundCategory": "VarInt",
+                    "EffectPositionX": "Int32",
+                    "EffectPositionY": "Int32",
+                    "EffectPositionZ": "Int32",
+                    "Volume": "Single",
+                    "Pitch": "Single",
+                    "Seed": "Int64"
+                }
+            },
+            "start_configuration": {},
+            "stop_sound": {
+                "fields": {
+                    "Flags": "UInt8",
+                    "Source": "VarInt {Flags | 1}",
+                    "Sound": "Identifier {Flags | 2}"
+                }
+            },
+            "store_cookie": null,
+            "system_chat": {
+                "fields": {
+                    "Content": "TextPart",
+                    "Overlay": "Bool"
+                }
+            },
+            "tab_list": {
+                "fields": {
+                    "Header": "TextPart",
+                    "Footer": "TextPart"
+                }
+            },
+            "tag_query": {
+                "fields": {
+                    "TransactionId": "VarInt",
+                    "Nbt": "NbtTag"
+                }
+            },
+            "take_item_entity": {
+                "fields": {
+                    "CollectedEntityId": "VarInt",
+                    "CollectorEntityId": "VarInt",
+                    "PickupItemCount": "VarInt"
+                }
+            },
+            "teleport_entity": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "VelocityX": "Double",
+                    "VelocityY": "Double",
+                    "VelocityZ": "Double",
+                    "Yaw": "Single",
+                    "Pitch": "Single",
+                    "Flags": "Int32",
+                    "OnGround": "Bool"
+                }
+            },
+            "ticking_state": {
+                "fields": {
+                    "TickRate": "Single",
+                    "IsFrozen": "Bool"
+                }
+            },
+            "ticking_step": {
+                "fields": {
+                    "TickSteps": "VarInt"
+                }
+            },
+            "transfer": null,
+            "update_advancements": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "update_attributes": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "update_mob_effect": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "update_recipes": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "update_tags": null,
+            "projectile_power": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "Power": "Double"
+                }
+            },
+            "custom_report_details": null,
+            "server_links": null
+        },
+        "serverbound": {
+            "accept_teleportation": {
+                "fields": {
+                    "TeleportId": "VarInt"
+                }
+            },
+            "block_entity_tag_query": {
+                "fields": {
+                    "TransactionId": "VarInt",
+                    "Location": "BlockPosition"
+                }
+            },
+            "bundle_item_selected": {
+                "fields": {
+                    "SlotOfBundle": "VarInt",
+                    "SlotInBundle": "VarInt"
+                }
+            },
+            "change_difficulty": {
+                "fields": {
+                    "NewDifficulty": "UInt8"
+                }
+            },
+            "chat_ack": {
+                "fields": {
+                    "MessageCount": "VarInt"
+                }
+            },
+            "chat_command": {
+                "fields": {
+                    "Command": "String (32767)"
+                }
+            },
+            "chat_command_signed": {
+                "fields": {
+                    "Command": "String (32767)",
+                    "Timestamp": "Int64",
+                    "Salt": "Int64",
+                    "ArgumentSignatures": "ChatArgumentSignature[]",
+                    "MessageCount": "VarInt",
+                    "Acknowledged": "UInt8[20]"
+                }
+            },
+            "chat": {
+                "fields": {
+                    "Message": "String (256)",
+                    "Timestamp": "Int64",
+                    "Salt": "Int64",
+                    "Signature": "UInt8[256]?",
+                    "MessageCount": "VarInt",
+                    "Acknowledged": "UInt8[20]"
+                }
+            },
+            "chat_session_update": {
+                "fields": {
+                    "Todo": "UInt8"
+                }
+            },
+            "chunk_batch_received": {
+                "fields": {
+                    "ChunksPerTick": "Single"
+                }
+            },
+            "client_command": {
+                "fields": {
+                    "ActionId": "VarInt"
+                }
+            },
+            "client_tick_end": {},
+            "client_information": null,
+            "command_suggestion": {
+                "fields": {
+                    "TransactionId": "VarInt",
+                    "Text": "String (32500)"
+                }
+            },
+            "configuration_acknowledged": {},
+            "container_button_click": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "ButtonId": "VarInt"
+                }
+            },
+            "container_click": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "StateId": "VarInt",
+                    "Slot": "Int16",
+                    "Button": "UInt8",
+                    "Mode": "VarInt",
+                    "ChangedSlots": "ItemStack[]",
+                    "CarriedItem": "ItemStack"
+                }
+            },
+            "container_close": {
+                "fields": {
+                    "WindowId": "VarInt"
+                }
+            },
+            "container_slot_state_changed": {
+                "fields": {
+                    "SlotId": "VarInt",
+                    "WindowId": "VarInt",
+                    "State": "Bool"
+                }
+            },
+            "cookie_response": null,
+            "custom_payload": null,
+            "debug_sample_subscription": {
+                "fields": {
+                    "SampleType": "VarInt"
+                }
+            },
+            "edit_book": {
+                "fields": {
+                    "Slot": "VarInt",
+                    "Entries": "String (1024)[]",
+                    "Title": "String (32)"
+                }
+            },
+            "entity_tag_query": {
+                "fields": {
+                    "TransactionId": "VarInt",
+                    "EntityId": "VarInt"
+                }
+            },
+            "interact": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "Type": "VarInt",
+                    "TargetX": "Single {Type = 2}",
+                    "TargetY": "Single {Type = 2}",
+                    "TargetZ": "Single {Type = 2}",
+                    "Hand": "VarInt {Type = 0/1}",
+                    "Sneaking": "Bool"
+                }
+            },
+            "jigsaw_generate": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "Levels": "VarInt",
+                    "KeepJigsaws": "Bool"
+                }
+            },
+            "keep_alive": null,
+            "lock_difficulty": {
+                "fields": {
+                    "Locked": "Bool"
+                } 
+            },
+            "move_player_pos": {
+                "fields": {
+                    "X": "Double",
+                    "FeetY": "Double",
+                    "Z": "Double",
+                    "Flags": "UInt8"
+                } 
+            },
+            "move_player_pos_rot": {
+                "fields": {
+                    "X": "Double",
+                    "FeetY": "Double",
+                    "Z": "Double",
+                    "Yaw": "Single",
+                    "Pitch": "Single",
+                    "Flags": "UInt8"
+                } 
+            },
+            "move_player_rot": {
+                "fields": {
+                    "Yaw": "Single",
+                    "Pitch": "Single",
+                    "Flags": "UInt8"
+                } 
+            },
+            "move_player_status_only": {
+                "fields": {
+                    "Flags": "UInt8"
+                } 
+            },
+            "move_vehicle": {
+                "fields": {
+                    "X": "Double",
+                    "Y": "Double",
+                    "Z": "Double",
+                    "Yaw": "Single",
+                    "Pitch": "Single",
+                    "Flags": "UInt8"
+                } 
+            },
+            "paddle_boat": {
+                "fields": {
+                    "LeftPaddleTurning": "Bool",
+                    "RightPaddleTurning": "Bool"
+                } 
+            },
+            "pick_item_from_block": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "IncludeData": "Bool"
+                } 
+            },
+            "pick_item_from_entity": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "IncludeData": "Bool"
+                } 
+            },
+            "ping_request": null,
+            "place_recipe": {
+                "fields": {
+                    "WindowId": "VarInt",
+                    "RecipeId": "VarInt",
+                    "MakeAll": "Bool"
+                } 
+            },
+            "player_abilities": {
+                "fields": {
+                    "Flags": "UInt8"
+                } 
+            },
+            "player_action": {
+                "fields": {
+                    "Status": "VarInt",
+                    "Location": "BlockPosition",
+                    "Face": "UInt8",
+                    "Sequence": "VarInt"
+                } 
+            },
+            "player_command": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "ActionId": "VarInt",
+                    "JumpBoost": "VarInt"
+                } 
+            },
+            "player_input": {
+                "fields": {
+                    "Flags": "UInt8"
+                } 
+            },
+            "player_loaded": {},
+            "pong": null,
+            "recipe_book_change_settings": {
+                "fields": {
+                    "BookId": "VarInt",
+                    "BookOpen": "Bool",
+                    "FilterActive": "Bool"
+                } 
+            },
+            "recipe_book_seen_recipe": {
+                "fields": {
+                    "RecipeId": "VarInt"
+                } 
+            },
+            "rename_item": {
+                "fields": {
+                    "ItemName": "String (32767)"
+                } 
+            },
+            "resource_pack": null,
+            "seen_advancements": {
+                "fields": {
+                    "Action": "VarInt",
+                    "TabId": "Identifier?"
+                } 
+            },
+            "select_trade": {
+                "fields": {
+                    "SelectedSlot": "VarInt"
+                } 
+            },
+            "set_beacon": {
+                "fields": {
+                    "PrimaryEffect": "VarInt?",
+                    "SecondaryEffect": "VarInt?"
+                } 
+            },
+            "set_carried_item": {
+                "fields": {
+                    "Slot": "Int16"
+                } 
+            },
+            "set_command_block": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "Command": "String (32767)",
+                    "Mode": "VarInt",
+                    "Flags": "UInt8"
+                } 
+            },
+            "set_command_minecart": {
+                "fields": {
+                    "EntityId": "VarInt",
+                    "Command": "String (32767)",
+                    "TrackOutput": "Bool"
+                } 
+            },
+            "set_creative_mode_slot": {
+                "fields": {
+                    "Slot": "Int16",
+                    "ClickedItem": "ItemStack"
+                } 
+            },
+            "set_jigsaw_block": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "Name": "Identifier",
+                    "Target": "Identifier",
+                    "Pool": "Identifier",
+                    "FinalState": "String (32767)",
+                    "JointType": "String (32767)",
+                    "SelectionPriority": "VarInt",
+                    "PlacementPriority": "VarInt"
+                } 
+            },
+            "set_structure_block": {
+                "fields": {
+                    "Todo": "UInt8"
+                } 
+            },
+            "sign_update": {
+                "fields": {
+                    "Location": "BlockPosition",
+                    "IsFrontText": "Bool",
+                    "Line1": "String (384)",
+                    "Line2": "String (384)",
+                    "Line3": "String (384)",
+                    "Line4": "String (384)"
+                }
+            },
+            "swing": {
+                "fields": {
+                    "Hand": "VarInt"
+                } 
+            },
+            "teleport_to_entity": {
+                "fields": {
+                    "TargetPlayer": "Uuid"
+                } 
+            },
+            "use_item_on": {
+                "fields": {
+                    "Hand": "VarInt",
+                    "Location": "BlockPosition",
+                    "Face": "VarInt",
+                    "CursorPositionX": "Single",
+                    "CursorPositionY": "Single",
+                    "CursorPositionZ": "Single",
+                    "InsideBlock": "Bool",
+                    "WorldBorderHit": "Bool",
+                    "Sequence": "VarInt"
+                } 
+            },
+            "use_item": {
+                "fields": {
+                    "Hand": "VarInt",
+                    "Sequence": "VarInt",
+                    "Yaw": "Single",
+                    "Pitch": "Single"
+                } 
+            }
+        }
+    }
+}
