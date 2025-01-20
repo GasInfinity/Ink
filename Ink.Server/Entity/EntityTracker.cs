@@ -74,7 +74,7 @@ public class EntityTracker : IEntityTracker // TODO Split / Refactor this some d
         }
 
         bool hasDirtyMeta = this.entity.HasDirtyMetadata;
-        ClientboundSetEntityData metaPacket = default;
+        // ClientboundSetEntityData metaPacket = default;
         if (hasDirtyMeta)
         {
             // metaPacket = CSetEntityMetadataPacket.FromDirtyMeta(this.entity.EntityId, this.entity);
@@ -112,7 +112,7 @@ public class EntityTracker : IEntityTracker // TODO Split / Refactor this some d
         this.newViewers.Clear();
 
         if(this.viewers.Count > 0)
-            UpdateViewers(currentEntityPosition, currentEntityRotation, currentEntityVelocity, hasDirtyMeta, metaPacket);
+            UpdateViewers(currentEntityPosition, currentEntityRotation, currentEntityVelocity, hasDirtyMeta, default);
 
         ++this.ticks;
     }
@@ -141,7 +141,7 @@ public class EntityTracker : IEntityTracker // TODO Split / Refactor this some d
     {
         connection.Send(new ClientboundBundleDelimiter());
         SendSpecializedSpawn(connection);
-        connection.Send(cachedMeta);
+        // connection.Send(cachedMeta);
         connection.Send(new ClientboundBundleDelimiter());
     }
 
@@ -149,8 +149,8 @@ public class EntityTracker : IEntityTracker // TODO Split / Refactor this some d
     {
         connection.Send(new ClientboundBundleDelimiter());
         SendSpecializedSpawn(connection);
-        connection.Send(cachedMeta);
-        connection.Send(cachedEquipment);
+        // connection.Send(cachedMeta);
+        // connection.Send(cachedEquipment);
         connection.Send(new ClientboundBundleDelimiter());
     }
 
@@ -193,7 +193,7 @@ public class EntityTracker : IEntityTracker // TODO Split / Refactor this some d
 
         if (hasDirtyMeta)
         {
-            Send(dirtyMetaPacket);
+            // Send(dirtyMetaPacket);
         }
 
         if (sendEntityTeleport)

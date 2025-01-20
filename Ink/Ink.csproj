@@ -3,6 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <EnableEnumGeneratorInterceptor>true</EnableEnumGeneratorInterceptor>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,11 +19,13 @@
     <PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
 
     <PackageReference Include="NetEscapades.EnumGenerators" Version="1.0.0-beta11" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />
 
     <PackageReference Include="ZlibSharp" Version="1.2.13.4" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ink.Common\Ink.Common.csproj" />
     <ProjectReference Include="..\Ink.Text\Ink.Text.csproj" />
   </ItemGroup>
 </Project>

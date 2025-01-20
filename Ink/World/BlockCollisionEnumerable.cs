@@ -28,13 +28,7 @@ public struct BlockCollisionEnumerable(BaseWorld world, in Aabb collider)
             if(!world.IsCurrentlyLoaded(currentPosition))
                 continue;
 
-            BlockStateChild state = world.GetBlockState(currentPosition);
-
-            if(state.Root == null)
-            {
-                Console.WriteLine($"WHAAAAAAAAT????? {state.Id} {currentPosition}");
-                Console.WriteLine($"{state}");
-            }
+            BlockState state = world.GetBlockState(currentPosition);
             Block? block = state.GetBlock(world.BlockRegistry);
 
             if(block == null)

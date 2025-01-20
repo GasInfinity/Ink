@@ -40,7 +40,7 @@ FINAL DISCLAIMER:
 - Perfect non-allocating state and packet handling that supports NAOT (Medium, lots of time to think of a good design)
 - Generate all packets statically but with support for debugging and querying packet info. The only thing needed would be a json that has the description of all packet fields and the dump from the server data generator (Needed for NAOT and for my sanity for updating id's or packets between versions) 
 - Pooled chunks/section data and palette. (Ez)
-- Good non-allocating low-memory source generated BlockStates with support for querying a property by name and more. (NEEDS SMALL REWRITE)
+- Good non-allocating low-memory source generated BlockStates with support for querying a property by name and more. (LGTM for now)
 - Basic block, item and entity handling. (NEEDS PARTIAL REWRITE)
 - Simple chunk batching support
 
@@ -48,7 +48,8 @@ FINAL DISCLAIMER:
 - Document HOW ALL THIS WORKS (Impossible Tier 2), too many files. Making a minecraft server that is aimed at low-memory usage and really wasn't that easy to do...
 - Think about what is this project for. Is it a general purpose library and a server or just a server? Thinking about abstractions/apis that support both is both time-consuming and really, really boring. Usually it takes multiple rewrites of one thing for it to be good enough. (Impossible)
 
-- Think and refactor BlockState source generation and storage (Medium)
+- Hey! It seems I could try to prototype an ECS based world... Gotta go fast?
+- Hey! It seems blocks and items are MOSTLY data driven internally... Looks like we can take advantage of that :D (Medium)
 - Look into inventories and think about how to approach their interface/implementation (Medium-Hard)
 - Refactor entity syncing, obviously syncing is only needed on the server, why do we have an IEntityTracker in the general purpose lib?
 - Refactor entity physics, is there a better way to do them?
@@ -57,8 +58,6 @@ FINAL DISCLAIMER:
 - Look into loading automatically generated registry id's into their respective registries or generating Id+Identifier pairs. (Important, Medium)
 - Look into DataFixerUpper and their codecs, can't we port it and do something similar? It's MIT (Hard, wtf is a monoid? Codecs may be enough)
 - Look into Brigardier, its needed for commands. Port incoming? It's MIT (Ez, but time consuming)
-   
-   
    
 ---
 ---

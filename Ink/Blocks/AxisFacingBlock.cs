@@ -10,6 +10,6 @@ public class AxisFacingBlock : Block
     {
     }
 
-    public override BlockStateChild ComputePlacementState(in ItemPlacementContext context)
-        => DefaultState.WithProperty(Properties.Axis, context.PlaceFace.ToDirection().Axis);
+    public override BlockState ComputePlacementState(in ItemPlacementContext context)
+        => DefaultState.WithProperty(PropertyNames.Axis, context.PlaceFace.ToDirection().Axis);
 }

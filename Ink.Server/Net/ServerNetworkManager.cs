@@ -12,9 +12,6 @@ public sealed class ServerNetworkManager : ITickable, IAsyncDisposable
 {
     private static readonly TextPart InternalServerError = TextPart.String("Internal Server Error: Contact the administrator!");
 
-    const long KeepAliveInterval = 15000; // Every 15 seconds (make configurable?)
-    const long MaxKeepAliveResponseTime = 30000; // If the client does not respond for 30 seconds, disconnect (make configurable?)
-
     private readonly ServerNetworkGameManager gameHandler;
     private readonly InkServerOptions.Network options;
     private readonly ILoggerFactory loggerFactory;

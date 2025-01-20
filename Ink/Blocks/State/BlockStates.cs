@@ -1,41 +1,37 @@
-﻿using System.Collections.Frozen;
+﻿using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace Ink.Blocks.State;
 
 public static partial class BlockStates
 {
     // All these things are initialized by the source generated file!
-    private static readonly FrozenDictionary<int, (BlockStateRoot, int)> AllStates = FrozenDictionary<int, (BlockStateRoot, int)>.Empty;
-    public static readonly int StateCount;
-    public static readonly byte MaxStateBits;
+    private static readonly ImmutableArray<(BlockStateRoot, int)> AllStates = ImmutableArray<(BlockStateRoot, int)>.Empty;
+    // public const int StateCount; SourceGen
+    // public const byte MaxStateBits; SourceGen
 
-    public static bool TryGetState(int id, out BlockStateChild state)
+    public static bool TryGetState(int id, out BlockState state)
     {
-        if (!AllStates.TryGetValue(id, out (BlockStateRoot, int) stateData))
+        if (id >= StateCount)
         {
             state = default;
             return false;
         }
 
-        state = stateData.Item1.UniquePropertyState.GetValueRefOrNullRef(stateData.Item2);
+        (BlockStateRoot Root, int RootIndex) = AllStates[id];
+        state = new (Root, id, RootIndex);
         return true;
     }
 
-    public static BlockStateChild GetState(int id)
-    {
-        if(TryGetState(id, out BlockStateChild state))
-            return state;
+    public static BlockState GetState(int id)
+        => TryGetState(id, out BlockState state) ? state : throw new UnreachableException($"Unknown id {id}");
 
-        Console.WriteLine($"Bro??? {id}");
-        return BlockStates.Air.Root.Default;
-    }
-
-    private static void AddRoot(Dictionary<int, (BlockStateRoot, int)> values, BlockStateRoot root)
+    private static void AddRoot(ImmutableArray<(BlockStateRoot, int)>.Builder values, BlockStateRoot root)
     {
-        foreach(int key in root.UniquePropertyState.Keys)
+        foreach(int key in root.StateCombinations.Keys)
         {
-            ref readonly BlockStateChild child = ref root.UniquePropertyState.GetValueRefOrNullRef(key);
-            values.Add(child.Id, (child.Root, child.UniqueRootIndex));
+            int id = root.StateCombinations.GetValueRefOrNullRef(key);
+            values[id] = ((root, key));
         }
     }
 }

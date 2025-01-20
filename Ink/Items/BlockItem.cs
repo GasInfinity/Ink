@@ -38,7 +38,7 @@ public sealed class BlockItem : Item
 
     private bool TryPlace(in ItemPlacementContext context, PlayerEntity player, BaseWorld world, BlockPosition location)
     {
-        BlockStateChild lastState = world.GetBlockState(location);
+        BlockState lastState = world.GetBlockState(location);
         Block? lastStateBlock = lastState.GetBlock(world.BlockRegistry);
 
         if (!(lastStateBlock?.CanReplace(lastState, context) ?? true))
@@ -47,7 +47,7 @@ public sealed class BlockItem : Item
         if (!Block.CanPlaceAt(world, location))
             return false;
 
-        BlockStateChild state = Block.ComputePlacementState(context);
+        BlockState state = Block.ComputePlacementState(context);
 
         if (!world.CanPlaceAt(location, state, Block, out _))
             return false;

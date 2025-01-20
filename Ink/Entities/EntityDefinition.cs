@@ -1,5 +1,4 @@
-﻿using Ink.Data;
-using Ink.Math;
+﻿using Ink.Math;
 
 namespace Ink.Entities;
 
@@ -7,7 +6,7 @@ public record EntityDefinition
 {
     public static readonly EntityDefinition Player = new()
     {
-        Type = EntityType.Player,
+        Type = 147,
         TickSyncInterval = 2,
         CollisionBox = AabbDefinition.FromSizes(0.6, 1.8),
         EyeHeight = 1.62
@@ -15,7 +14,7 @@ public record EntityDefinition
 
     public static readonly EntityDefinition Cow = new()
     {
-        Type = EntityType.Cow,
+        Type = 28,
         TickSyncInterval = 2,
         CollisionBox = AabbDefinition.FromSizes(0.9, 1.4),
         EyeHeight = 1.3
@@ -23,7 +22,7 @@ public record EntityDefinition
 
     public static readonly EntityDefinition Item = new()
     {
-        Type = EntityType.Item,
+        Type = 68,
         TickSyncInterval = 4,
         ObstructsBlockPlacements = false,
         CollisionBox = AabbDefinition.FromSizes(0.25, 0.25),

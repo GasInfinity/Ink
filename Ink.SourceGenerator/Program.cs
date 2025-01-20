@@ -1,7 +1,8 @@
 ﻿using Ink.SourceGenerator.Block;
 using Ink.SourceGenerator.Packet;
 using Ink.SourceGenerator.Registry;
-using System.CodeDom.Compiler; using System.Collections.Immutable;
+using System.CodeDom.Compiler; 
+using System.Collections.Immutable;
 using System.Text.Json;
 
 namespace Ink.SourceGenerator;
@@ -48,19 +49,14 @@ public class Program // TODO Refactor this!!
         using StreamWriter writer = new(outputFile);
         using IndentedTextWriter indentedWriter = new(writer);
 
-        RegistryProcessor.WriteTo(indentedWriter, @namespace, className, registry);
+        // RegistryProcessor.WriteTo(indentedWriter, @namespace, className, registry);
     }
 
     private static void ProcessBlocks()
     {
-        _ = Directory.CreateDirectory("Out");
         using FileStream blocksFile = File.OpenRead("blocks.json");
         ImmutableDictionary<string, BlockData> blocks = JsonSerializer.Deserialize(blocksFile, InkGeneratorJsonContext.Default.ImmutableDictionaryStringBlockData)!;
 
-        using FileStream blockStatesFile = File.OpenWrite("Out/BlockStates.g.cs");
-        using StreamWriter writer = new(blockStatesFile);
-        using IndentedTextWriter indentedWriter = new(writer);
-
-        BlocksProcessor.WriteTo(indentedWriter, blocks);
+        BlocksProcessor.Process(blocks);
     }
 }

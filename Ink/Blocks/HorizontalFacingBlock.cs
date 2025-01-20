@@ -9,6 +9,6 @@ public class HorizontalFacingBlock : Block
     {
     }
 
-    public override BlockStateChild ComputePlacementState(in ItemPlacementContext context)
-        => DefaultState.WithProperty(Properties.Facing, context.HorizontalPlayerDirection.Opposite.Horizontal);
+    public override BlockState ComputePlacementState(in ItemPlacementContext context)
+        => DefaultState.WithProperty(PropertyNames.Facing, context.HorizontalPlayerDirection.Opposite.Value);
 }

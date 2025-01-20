@@ -163,7 +163,7 @@ public abstract class Entity : ITickable, IMetaProvider, IAsyncCommandSender
     {
         TickLogic();
         TickPhysics();
-        Tracker.Tick();
+        // Tracker.Tick();
 
         lastPosition = position;
         lastVelocity = velocity;
@@ -190,7 +190,7 @@ public abstract class Entity : ITickable, IMetaProvider, IAsyncCommandSender
         if(onGround)
         {
             BlockPosition slipperyBlock = (BlockPosition)(this.Position - new Vec3<double>(0, 0.5, 0));
-            BlockStateChild state = world!.GetBlockState(slipperyBlock);
+            BlockState state = world!.GetBlockState(slipperyBlock);
             Block? block = state.GetBlock(world.BlockRegistry);
 
             if(block != null)

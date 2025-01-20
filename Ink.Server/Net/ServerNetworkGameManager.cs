@@ -25,6 +25,9 @@ public sealed class ServerNetworkGameManager : ITickable
     public ServerRegistryManager RegistryManager
         => this.registryManager;
 
+    public int CurrentlyPlaying
+        => this.playingConnections.Count;
+
     public ServerNetworkGameManager(ServerRegistryManager registryManager, ILoginListener loginListener)
     {
         this.registryManager = registryManager;

@@ -1,5 +1,4 @@
 ﻿using Ink.Registries;
-using Ink.Util;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
@@ -18,52 +17,35 @@ namespace Ink.Blocks.State;
    - TryGetPropertyAs<T>(string name);
    - TryWithProperty<T>(string name, T value, out BlockStateDefinition definition);
  
- // I don't think mojang will allow having more than 8 bits for a property (2^8 -> 256 states for only 1 property! add other bit and you'll have 512, that won't happen)
- readonly record struct Property -> byte Data [Value] (8 bits for value)
- readonly record struct PropertyRange -> byte Data [(PropertyType << 4) | BitsNeeded] (Same)
+ readonly record struct Property(Int32Range, EnumValues, Boolean) -> Has Different Types
  
  Block -> private readonly BlockStateDefinitionRoot
    - DefaultState -> BlockStateChild (From BlockStateRoot) -> .State -> BlockState (int)
 
     FrozenDictionary<int, BlockStateDefinition> States -> All
 */
-public record BlockStateRoot
+public sealed record BlockStateRoot
 {
-    public readonly Identifier Identifier;
+    public readonly Identifier Location;
     public readonly FrozenDictionary<string, int> PropertyKeyIndex;
-    public readonly ImmutableArray<PropertyDefinition> Properties;
-    public readonly FrozenDictionary<int, BlockStateChild> UniquePropertyState;
-    public readonly int DefaultRootIndex;
+    public readonly ImmutableArray<(Property Definition, byte BitsUsed, byte BitOffset)> Properties;
+    public readonly FrozenDictionary<int, int> StateCombinations;
+    public readonly int DefaultIndex;
 
-    public ref readonly BlockStateChild Default
-        => ref UniquePropertyState.GetValueRefOrNullRef(DefaultRootIndex);
+    public BlockState Default
+        => new(this, StateCombinations[DefaultIndex], DefaultIndex);
 
-    public BlockStateRoot(Identifier identifier, FrozenDictionary<string, int> keyIndex, ImmutableArray<PropertyDefinition> properties, params ReadOnlySpan<BlockStateDefinition> stateDefinitions)
+    public BlockStateRoot(Identifier identifier, FrozenDictionary<string, int> keyIndex, ImmutableArray<(Property, byte, byte)> properties, FrozenDictionary<int, int> stateDefinitions, int defaultIndex)
     {
-        Identifier = identifier;
+        Location = identifier;
         PropertyKeyIndex = keyIndex;
         Properties = properties;
-
-        Dictionary<int, BlockStateChild> uniquePropertyState = new (stateDefinitions.Length);
-        foreach(var state in stateDefinitions)
-        {
-            BlockStateChild child = new(this, properties, state);
-
-            if(uniquePropertyState.TryGetValue(child.UniqueRootIndex, out BlockStateChild c))
-            {
-                Console.WriteLine($"DUPLICATE: {c.Id} {child.Id}");
-            }
-            uniquePropertyState.Add(child.UniqueRootIndex, child);
-
-            if (state.IsDefault)
-                DefaultRootIndex = child.UniqueRootIndex;
-        }
-
-        UniquePropertyState = uniquePropertyState.ToFrozenDictionary();
+        StateCombinations = stateDefinitions;
+        DefaultIndex = defaultIndex;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetPropertyDefinition(string property, out PropertyDefinition result)
+    public bool TryGetProperty(string property, out (Property Property, int BitsUsed, byte BitOffset) result)
     {
         if(!PropertyKeyIndex.TryGetValue(property, out int index))
         {
@@ -76,47 +58,30 @@ public record BlockStateRoot
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryWithProperty<T>(in BlockStateChild baseChild, string property, T value, out BlockStateChild state)
+    public bool TryWithProperty<T>(int rootIndex, string name, T value, out BlockState state)
         where T : unmanaged
     {
-        if (!PropertyKeyIndex.TryGetValue(property, out int index))
+        if (!PropertyKeyIndex.TryGetValue(name, out int nameIndex))
         {
             state = default;
             return false;
         }
 
-        PropertyDefinition propertyDefinition = Properties[index];
-        if (!propertyDefinition.Kind.IsCompatible<T>())
+        (Property property, int bitsUsed, int bitOffset) = Properties[nameIndex];
+        if (!property.TryGetIndex(value, out int propertyIndex))
         {
             state = default;
             return false;
         }
 
-        if (!Utilities.TryGetInteger(value, out ulong result))
-        {
-            state = default;
-            return false;
-        }
+        int maxPropertyValue = (1 << bitsUsed) - 1;
+        int bitsMask = ~(maxPropertyValue << bitOffset);
+        int newUniqueIndex = (rootIndex & bitsMask) | (propertyIndex << bitOffset);
 
-        int max = propertyDefinition.Max;
-        if(result > (ulong)max)
-        {
-            state = default;
-            return false;
-        }
-
-        int shift = default;
-
-        for(int i = 0; i < index; ++i)
-            shift += Properties[i].BitsUsed;
-
-        int bitsMask = ~(propertyDefinition.Max << shift);
-        int newUniqueIndex = (baseChild.UniqueRootIndex & bitsMask) | (int)((result - (ulong)propertyDefinition.Offset) << shift);
-
-        state = UniquePropertyState.GetValueRefOrNullRef(newUniqueIndex); // Will never be null, we don't need TryGet here
+        state = new(this, StateCombinations[newUniqueIndex], newUniqueIndex); // Will never be null, we don't need TryGet here
         return true;
     }
 
     public Block? GetBlock(FrozenRegistry<Block> registry)
-        => registry.Get(Identifier);
+        => registry.Get(Location);
 }

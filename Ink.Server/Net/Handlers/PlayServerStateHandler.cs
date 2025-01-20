@@ -43,7 +43,7 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
         where TPacket : struct, IPacket<TPacket>
         where TPacketHandler : class, IMainThreadPacketExecutor<TPacketHandler, TPacket>, new()
     {
-        private static readonly ObjectPool<TPacketHandler> HandlersPool = new DefaultObjectPool<TPacketHandler>(new DefaultPooledObjectPolicy<TPacketHandler>());
+        private static readonly ObjectPool<TPacketHandler> HandlersPool = new DefaultObjectPool<TPacketHandler>(new DefaultPooledObjectPolicy<TPacketHandler>(), 8192); // HACK: Why 8192?
         private TPacket packet;
 
         public ref TPacket Packet
@@ -96,6 +96,14 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
         public override void Handle(in ServerboundClientInformation packet, IConnection connection, ServerNetworkConnection.ServerConnectionContext ctx)
         {
             ctx.ClientInformation = packet;
+        }
+    }
+
+    private sealed class ChatPacketHandler : PacketHandler<ServerNetworkConnection.ServerConnectionContext, ServerboundChat>
+    {
+        public override void Handle(in ServerboundChat packet, IConnection connection, ServerNetworkConnection.ServerConnectionContext ctx)
+        {
+            ctx.GameHandler.BroadcastPlay(new ClientboundSystemChat(TextPart.String(packet.Message), false));
         }
     }
 
@@ -348,7 +356,7 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
 
             if (!player.IsSneaking)
             {
-                BlockStateChild state = world.GetBlockState(position);
+                BlockState state = world.GetBlockState(position);
                 Block? block = state.GetBlock(world.BlockRegistry);
 
                 ActionResult blockUseResult = block?.OnUse(state, world, position, player, hand) ?? ActionResult.Pass;
@@ -473,6 +481,7 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
         // Everything will only be instantiated once :D 
         Register(new PlayCustomPayloadPacketHandler());
         Register(new ClientInformationPacketHandler());
+        Register(new ChatPacketHandler());
         Register(new MainThreadExecutorPacketHandler<ChunkBatchReceivedPacketExecutor, ServerboundChunkBatchReceived>());
         Register(new MainThreadExecutorPacketHandler<SwingArmPacketExecutor, ServerboundSwing>());
         Register(new MainThreadExecutorPacketHandler<PlayerActionPacketExecutor, ServerboundPlayerAction>());

@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableEnumGeneratorInterceptor>true</EnableEnumGeneratorInterceptor>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Rena.Mathematics" Version="1.3.0" />
+    <PackageReference Include="Rena.Native" Version="1.4.2" />
+
+    <PackageReference Include="NetEscapades.EnumGenerators" Version="1.0.0-beta11" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ink.Text\Ink.Text.csproj" />
+  </ItemGroup>
+</Project>

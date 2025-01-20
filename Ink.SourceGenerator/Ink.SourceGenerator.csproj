@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ink.Common\Ink.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="NetEscapades.EnumGenerators" Version="1.0.0-beta11" PrivateAssets="all" ExcludeAssets="runtime" />
   </ItemGroup>
 

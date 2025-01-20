@@ -8,7 +8,7 @@ public readonly record struct BlockData(ImmutableDictionary<string, ImmutableArr
 {
     [JsonInclude]
     [JsonPropertyName("properties")]
-    public readonly ImmutableDictionary<string, ImmutableArray<string>> Properties = Properties;
+    public readonly ImmutableDictionary<string, ImmutableArray<string>>? Properties = Properties;
 
     [JsonInclude]
     [JsonPropertyName("states")]

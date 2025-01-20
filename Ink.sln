@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ink.Text", "Ink.Text\Ink.Text.csproj", "{B053E1DD-EE33-4771-BEBF-98B38A5DE305}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ink.Common", "Ink.Common\Ink.Common.csproj", "{C47EEB0C-8D0A-4A82-8437-90B4259112B3}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ink", "Ink\Ink.csproj", "{B708BCF6-9FE3-4351-BCF5-28E31D5B38A7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ink.Server", "Ink.Server\Ink.Server.csproj", "{8E9FBF7D-34A3-45BF-B847-9CBB15164E1E}"
@@ -43,6 +45,10 @@ Global
 		{AFE94295-3C6C-42F4-983B-A1D14D2D51C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AFE94295-3C6C-42F4-983B-A1D14D2D51C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AFE94295-3C6C-42F4-983B-A1D14D2D51C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C47EEB0C-8D0A-4A82-8437-90B4259112B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C47EEB0C-8D0A-4A82-8437-90B4259112B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C47EEB0C-8D0A-4A82-8437-90B4259112B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C47EEB0C-8D0A-4A82-8437-90B4259112B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

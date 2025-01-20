@@ -40,9 +40,6 @@ public sealed class ConfigurationServerStateHandler : ServerKeptAlivePacketState
 
             c.ClientKnownPacks = packet.KnownPacks;
             c.CurrentState = State.PreparingRegistryData;
-            
-            foreach(var i in c.ClientKnownPacks)
-                Console.WriteLine($"Client known pack: {i}");
         }
     }
 

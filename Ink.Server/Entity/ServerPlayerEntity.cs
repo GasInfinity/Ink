@@ -16,6 +16,8 @@ using Ink.Containers;
 using Ink.Text;
 using Ink.Registries;
 using Ink.Auth;
+using NetEscapades.EnumGenerators;
+using Ink.Net.Structures;
 
 namespace Ink.Server.Entities;
 
@@ -129,7 +131,10 @@ public sealed class ServerPlayerEntity : PlayerEntity
 
         NetworkContext.Connection.Send(new ClientboundGameEvent(13, 0)); // TODO: Enum (StartWaitingForLevelChunks)
 
-        // Connection.GameHandler.BroadcastPlay(new CPlayerInfoUpdatePacket(CPlayerInfoUpdatePacket.Actions.AddPlayer | CPlayerInfoUpdatePacket.Actions.UpdateListed | CPlayerInfoUpdatePacket.Actions.UpdateGameMode, this.infoEntry));
+        NetworkContext.Connection.Send(new ClientboundPlayerInfoUpdate(new PlayersInfo(
+            Actions: PlayersInfo.Action.AddPlayer | PlayersInfo.Action.UpdateListed | PlayersInfo.Action.UpdateGameMode,
+            Players: [new PlayersInfo.Info(Profile: Profile, Listed: true, GameMode: CurrentGameMode)]
+        )));
 
         // foreach (ServerPlayerEntity p in Connection.GameHandler.Playing)
         // {
@@ -182,7 +187,7 @@ public sealed class ServerPlayerEntity : PlayerEntity
 
     public bool TryBreakBlock(BlockPosition position)
     {
-        BlockStateChild state = World.GetBlockState(position);
+        BlockState state = World.GetBlockState(position);
         Block? block = state.GetBlock(World.BlockRegistry);
         block?.OnBreak(World, position, state, this);
         return World.BreakBlock(position, true, this);
@@ -211,10 +216,11 @@ public sealed class ServerPlayerEntity : PlayerEntity
         SyncChangedAttributes();
         ProcessFlags();
 
-        GCMemoryInfo gcInfo = GC.GetGCMemoryInfo(GCKind.Any);
+        if(Profile.Name != "GasInfinity")
+            return;
 
-        if((this.ticks % 60) == 0)
-            SetTabHeaderFooter(TextPart.String($"Ink Server :D [Running on .NET {Environment.Version}]"), TextPart.String($"{BlockStates.StateCount} BlockStates loaded in memory\n{GC.GetTotalMemory(false) / 1024f / 1024f:N3}MiB/{GC.GetTotalAllocatedBytes(false) / 1024f / 1024f:N3}MiB (GC Pause since server start: {GC.GetTotalPauseDuration()})\n Viewing current chunk: {this.chunkManager.IsViewing(((BlockPosition)this.position).ToChunkPosition())}"));
+        if((this.ticks % 1) == 0)
+            SetTabHeaderFooter(TextPart.String($"Ink Server :D [Running on .NET {Environment.Version}) with {NetworkContext.GameHandler.CurrentlyPlaying} players]"), TextPart.String($"{BlockStates.StateCount} BlockStates loaded in memory\n{GC.GetTotalMemory(false) / 1024f / 1024f:N3}MiB/{GC.GetTotalAllocatedBytes(false) / 1024f / 1024f:N3}MiB (GC Pause since server start: {GC.GetTotalPauseDuration()})"));
     }
 
     protected override void TickPhysics() // TODO
@@ -269,26 +275,26 @@ public sealed class ServerPlayerEntity : PlayerEntity
 
     private void ProcessFlags()
     {
-        if (this.tickFlags.HasFlag(ServerPlayerFlags.ShouldSwingMain))
+        if (this.tickFlags.HasFlagFast(ServerPlayerFlags.ShouldSwingMain))
         {
             ClientboundAnimate swingMainPacket = new(EntityId, 0); // TODO: Animations enum
 
             Tracker.Send(swingMainPacket);
 
-            if (!this.tickFlags.HasFlag(ServerPlayerFlags.ClientSwingedMain))
+            if (!this.tickFlags.HasFlagFast(ServerPlayerFlags.ClientSwingedMain))
                 NetworkContext.Connection.Send(swingMainPacket);
         }
 
-        if (this.tickFlags.HasFlag(ServerPlayerFlags.ShouldSwingOff))
+        if (this.tickFlags.HasFlagFast(ServerPlayerFlags.ShouldSwingOff))
         {
             ClientboundAnimate swingOffPacket = new(EntityId, 3);
 
             Tracker.Send(swingOffPacket);
-            if (!this.tickFlags.HasFlag(ServerPlayerFlags.ClientSwingedOff))
+            if (!this.tickFlags.HasFlagFast(ServerPlayerFlags.ClientSwingedOff))
                 NetworkContext.Connection.Send(swingOffPacket);
         }
 
-        if(this.tickFlags.HasFlag(ServerPlayerFlags.SyncronizePosition))
+        if(this.tickFlags.HasFlagFast(ServerPlayerFlags.SyncronizePosition))
         {
             Teleport(position, rotation);
         }
@@ -314,6 +320,7 @@ public sealed class ServerPlayerEntity : PlayerEntity
     }
 
     [Flags]
+    [EnumExtensions]
     public enum ServerPlayerFlags
     {
         None,

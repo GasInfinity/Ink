@@ -17,7 +17,7 @@ using Ink.Blocks;
 using Ink.Vanilla.Blocks;
 using Ink.Vanilla.Items;
 using Ink.Entities;
-using Ink.Blocks.State;
+using System.Runtime;
 
 class Server : ILoginListener, IValueRegistrationListener<Item>, IValueRegistrationListener<Block>, IValueRegistrationListener<BiomeType>, IValueRegistrationListener<DimensionType>, IValueRegistrationListener<ChatType>, IValueRegistrationListener<DamageType>, IValueRegistrationListener<WolfVariant>, IValueRegistrationListener<PaintingVariant>
 {
@@ -26,8 +26,10 @@ class Server : ILoginListener, IValueRegistrationListener<Item>, IValueRegistrat
 
     static async Task Main()
     {
-        Console.WriteLine($"{Utilities.BitSize(4)}");
-        Console.WriteLine(BlockStates.GetState(8201).Id);
+        int newWorkerMin = Math.Max(Environment.ProcessorCount * 4, 32);
+        ThreadPool.SetMinThreads(newWorkerMin, newWorkerMin);
+        GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.Default;
         Server server = new();
         await server.RunAsync();
     }
@@ -141,7 +143,7 @@ class Server : ILoginListener, IValueRegistrationListener<Item>, IValueRegistrat
     {
         FrozenRegistryBuilder<DamageType> registry = registrationEvent.Registry;
 
-        foreach (string damagePath in Directory.EnumerateFiles("server-data/data/minecraft/damage_type"))
+        foreach (string damagePath in Directory.EnumerateFiles("damage_types"))
         {
             string damageType = Path.GetFileNameWithoutExtension(damagePath);
             using FileStream stream = File.OpenRead(damagePath);

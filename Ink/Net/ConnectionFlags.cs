@@ -1,6 +1,9 @@
+using NetEscapades.EnumGenerators;
+
 namespace Ink.Net;
 
 [Flags]
+[EnumExtensions]
 public enum ConnectionFlags : byte
 {
     None,

@@ -16,6 +16,7 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Ink.Net;
 
@@ -36,18 +37,44 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
         public Memory<byte> Memory
             => Data.AsMemory(0, Length);
 
-        public static ConnectionDataPacket FromData(ReadOnlySpan<byte> data, ConnectionFlags flags)
-        {
-            byte[] pooled = ArrayPool<byte>.Shared.Rent(data.Length);
-            data.CopyTo(pooled);
-            return new(data.Length, flags, pooled);
-        }
-        
         public void Dispose()
         {
             if(Data != null)
                 ArrayPool<byte>.Shared.Return(Data);
         }
+    }
+
+    private sealed class DefaultPooledBufferWriterObjectPolicy : PooledObjectPolicy<PooledArrayBufferWriter<byte>>
+    {
+        public override PooledArrayBufferWriter<byte> Create()
+            => new PooledArrayBufferWriter<byte>(ArrayPool<byte>.Shared);
+
+        public override bool Return(PooledArrayBufferWriter<byte> obj)
+        {
+            obj.Reset();
+            return true;
+        }
+    }
+
+    private sealed class DefaultPipeObjectPolicy : PooledObjectPolicy<Pipe>
+    {
+        public override Pipe Create()
+            => new ();
+
+        public override bool Return(Pipe obj)
+        {
+            obj.Reset();
+            return true;
+        }
+    }
+
+    private sealed class DefaultAesEngineObjectPolicy : PooledObjectPolicy<IBlockCipher>
+    {
+        public override IBlockCipher Create()
+            => AesEngine_X86.IsSupported ? new AesEngine_X86() : new AesEngine();
+
+        public override bool Return(IBlockCipher obj)
+            => true;
     }
 
     private const int TimeoutTicks = 60 * 20;
@@ -56,15 +83,20 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
     private static readonly TextPart ConnectionResetByPeer = TextPart.String("Connection reset by peer");
     private static readonly TextPart TimedOut = TextPart.String("Timed out");
 
-    private static readonly UnboundedChannelOptions SharedSendQueueOptions = new() { SingleReader = true };
+    private static readonly UnboundedChannelOptions SharedSendQueueOptions = new() { SingleReader = true, AllowSynchronousContinuations = true };
+
+    private static readonly ObjectPool<PooledArrayBufferWriter<byte>> PooledBufferWriters = new DefaultObjectPool<PooledArrayBufferWriter<byte>>(new DefaultPooledBufferWriterObjectPolicy());
+    private static readonly ObjectPool<Pipe> PooledPipes = ObjectPool.Create<Pipe>(new DefaultPipeObjectPolicy());
+    private static readonly ObjectPool<IBlockCipher> PooledAesEngines = new DefaultObjectPool<IBlockCipher>(new DefaultAesEngineObjectPolicy()); 
+
+    private static readonly ZlibDecoder CachedDecoder = new ZlibDecoder();
+    private static readonly ZlibEncoder CachedEncoder = new ZlibEncoder();
 
     private readonly ConnectionContext context;
     private readonly ConnectionPacketHandler<TContext> packetHandler;
     private readonly Channel<ConnectionDataPacket> sendQueue;
 
     private PooledArrayBufferWriter<byte>? compressionWriter;
-    private ZlibEncoder? compressionEncoder;
-    private ZlibDecoder? compressionDecoder;
     
     // TODO: Switch to System.Crypto when they implement non-allocating Span based API's
     private IBlockCipher? aesEncryption;
@@ -74,13 +106,11 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
     private PooledArrayBufferWriter<byte>? encryptionWriter;
     private Pipe? inputEncryptionPipe;
 
-    private NetworkState currentState = NetworkState.Handshake;
     private PacketStateHandler<TContext> currentHandler;
     private bool terminationAcknowledged;
     private int fragmentedCachedPacketLength;
     private int compressionThreshold;
     private ConnectionFlags flags;
-
     private long ticksWithoutResponse;
 
     protected readonly ILogger logger;
@@ -133,9 +163,7 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
         this.flags |= ConnectionFlags.Compressed;
         this.compressionThreshold = threshold;
 
-        this.compressionWriter = new PooledArrayBufferWriter<byte>(ArrayPool<byte>.Shared);
-        this.compressionEncoder = new ZlibEncoder(ZlibCompressionLevel.DefaultCompression, ZlibWindowBits.Zlib, ZlibCompressionStrategy.Default);
-        this.compressionDecoder = new ZlibDecoder(ZlibWindowBits.Zlib);
+        this.compressionWriter = PooledBufferWriters.Get();
     }
 
     protected void EnableEncryption(byte[] secretKey)
@@ -144,18 +172,18 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
         KeyParameter key = new KeyParameter(secretKey);
         ParametersWithIV keyIv = new ParametersWithIV(key, secretKey);
 
-        this.aesEncryption = AesEngine_X86.IsSupported ? new AesEngine_X86() : new AesEngine();
+        this.aesEncryption = PooledAesEngines.Get(); 
         this.aesEncryption.Init(true, key);
         this.cfbEncryptionFlow = new CfbBlockCipher(this.aesEncryption, 8);
         this.cfbEncryptionFlow.Init(true, keyIv);
 
-        this.aesDecryption = AesEngine_X86.IsSupported ? new AesEngine_X86() : new AesEngine();
+        this.aesDecryption = PooledAesEngines.Get();
         this.aesDecryption.Init(false, key);
         this.cfbDecryptionFlow = new CfbBlockCipher(this.aesDecryption, 8);
         this.cfbDecryptionFlow.Init(false, keyIv);
 
-        this.encryptionWriter = new PooledArrayBufferWriter<byte>(ArrayPool<byte>.Shared);
-        this.inputEncryptionPipe = new Pipe();
+        this.encryptionWriter = PooledBufferWriters.Get();
+        this.inputEncryptionPipe = PooledPipes.Get();
     }
 
     public void Send<TPacket>(in TPacket packet)
@@ -164,7 +192,8 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
         if (!IsConnected)
             return;
 
-        PooledArrayBufferWriter<byte> pooledWriter = new(ArrayPool<byte>.Shared); // TODO: Do not allocate, object pool?
+        // HACK: This is very hacky but works!
+        PooledArrayBufferWriter<byte> pooledWriter = PooledBufferWriters.Get();
 
         // Console.WriteLine($"Sending {typeof(TPacket).FullName}");
         pooledWriter.WriteVarInteger(this.currentHandler.StateInfo.DirectedRegistry(TPacket.PacketDirection).GetId(TPacket.PacketLocation));
@@ -174,6 +203,7 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
         int writtenCount = pooledWriter.WrittenCount;
         PooledArray<byte> data = pooledWriter.Detach();
         _ = this.sendQueue.Writer.TryWrite(new ConnectionDataPacket(writtenCount, this.flags, data.Array));
+        PooledBufferWriters.Return(pooledWriter);
     }
 
 
@@ -190,7 +220,6 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
             throw new InvalidOperationException();
         }
 
-        this.currentState = state;
         this.currentHandler = newStateHandler;
         this.currentHandler.Setup(this, ProvideHandlerContext());
     }
@@ -208,7 +237,7 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
 
                 SequencePosition transportConsumed;
 
-                if(this.flags.HasFlag(ConnectionFlags.Encrypted))
+                if(this.flags.HasFlagFast(ConnectionFlags.Encrypted))
                 {
                     PipeWriter inputEncryptionWriter = this.inputEncryptionPipe!.Writer;
                     foreach (ReadOnlyMemory<byte> value in transportReadBuffer)
@@ -263,6 +292,7 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
         {
             this.inputEncryptionPipe?.Writer.Complete();
             this.inputEncryptionPipe?.Reader.Complete();
+            Disconnect();
         }
     }
 
@@ -306,7 +336,7 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
             this.fragmentedCachedPacketLength = -1;
 
             // FIXME: I don't like this code duplication
-            if (!this.flags.HasFlag(ConnectionFlags.Compressed))
+            if (!this.flags.HasFlagFast(ConnectionFlags.Compressed))
             {
                 HandleUncompressedPacket(ref reader, length);
                 reader.Advance(length);
@@ -335,7 +365,7 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
                     using PooledArray<byte> pooledFullPayload = ArrayPool<byte>.Shared.Rent<byte>(dataLength);
                     Span<byte> fullPayload = pooledFullPayload.AsSpan()[..dataLength];
 
-                    if(!this.compressionDecoder!.TryDecompress(compressedPayload, fullPayload, out ZlibResult? result)
+                    if(!CachedDecoder.TryDecompress(compressedPayload, fullPayload, out ZlibResult? result)
                     || !result.HasValue)
                     {
                         Disconnect(TextPart.String("Badly compressed packet."));
@@ -388,28 +418,27 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
 
         try
         {
-            while (await sendQueueReader.WaitToReadAsync(DisconnectionToken))
+            while(await sendQueueReader.WaitToReadAsync())
             {
-                while (sendQueueReader.TryRead(out ConnectionDataPacket packet))
+                while(sendQueueReader.TryRead(out ConnectionDataPacket packet))
                 {
-                    ConnectionFlags packetFlags = packet.Flags;
-
                     using (packet)
                     {
-                        IBufferWriter<byte> output = packetFlags.Equals(ConnectionFlags.Encrypted) ? this.encryptionWriter! : transportWriter;
+                        ConnectionFlags packetFlags = packet.Flags;
+                        IBufferWriter<byte> output = packetFlags.HasFlagFast(ConnectionFlags.Encrypted) ? this.encryptionWriter! : transportWriter;
 
-                        if (packetFlags.HasFlag(ConnectionFlags.Compressed))
+                        if (packetFlags.HasFlagFast(ConnectionFlags.Compressed))
                         {
                             if (packet.Length < this.compressionThreshold)
                             {
                                 output.WriteVarInteger(packet.Length + 1);
-                                output.WriteVarInteger(0);
+                                output.WriteRaw((byte)0);
                                 output.Write(packet.Span);
                             }
                             else
                             {
                                 Span<byte> compressionTarget = compressionWriter!.GetSpan(packet.Span.Length); 
-                                if(!compressionEncoder!.TryCompress(packet.Span, compressionTarget, out ZlibResult? result)
+                                if(!CachedEncoder.TryCompress(packet.Span, compressionTarget, out ZlibResult? result)
                                 || !result.HasValue)
                                 {
                                     // FIXME: Do something else...
@@ -437,7 +466,7 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
                             output.Write(packet.Span);
                         }
 
-                        if(packetFlags.HasFlag(ConnectionFlags.Encrypted))
+                        if(packetFlags.HasFlagFast(ConnectionFlags.Encrypted))
                         {
                             Span<byte> data = transportWriter.GetSpan(this.encryptionWriter!.WrittenCount);
                             
@@ -453,11 +482,13 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
 
                 await transportWriter.FlushAsync(DisconnectionToken);
             }
-
-            await transportWriter.CompleteAsync();
         }
         catch (OperationCanceledException)
         {
+        }
+        finally
+        {
+            await transportWriter.CompleteAsync();
             Disconnect();
         }
     }
@@ -501,6 +532,20 @@ public abstract class NetworkConnection<TContext> : IConnection, IAsyncDisposabl
         GC.SuppressFinalize(this);
         this.compressionWriter?.Dispose();
         this.encryptionWriter?.Dispose();
+
+        if(this.flags.HasFlagFast(ConnectionFlags.Compressed))
+        {
+            PooledBufferWriters.Return(this.compressionWriter!);
+        }
+
+        if(this.flags.HasFlagFast(ConnectionFlags.Encrypted))
+        {
+            PooledAesEngines.Return(this.aesEncryption!);
+            PooledAesEngines.Return(this.aesDecryption!);
+            PooledPipes.Return(this.inputEncryptionPipe!);
+            PooledBufferWriters.Return(this.encryptionWriter!);
+        }
+
         return context.DisposeAsync();
     }
 }

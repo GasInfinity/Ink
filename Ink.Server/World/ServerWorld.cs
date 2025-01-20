@@ -24,7 +24,7 @@ public sealed class ServerWorld : BaseWorld
     private readonly EntityManager entityManager = new();
 
     public IEnumerable<ServerPlayerEntity> Players
-        => this.worldPlayers.Values; // TODO: Struct Linq!
+        => this.worldPlayers.Select(kv => kv.Value); // TODO: Optimized ConcurrentDictionary? .Values allocates each time its called
 
     protected override EntityManager EntityManager
         => this.entityManager;
@@ -50,7 +50,7 @@ public sealed class ServerWorld : BaseWorld
     public override void SyncWorldEvent(Entity? entity, WorldEvent id, BlockPosition position, int data)
         => this.syncWorldEvents.Add(((entity?.EntityId ?? 0) + 1, id, position, data));
 
-    public override bool SetBlockState(BlockPosition position, in BlockStateChild state, BlockStateChangeFlags flags, int maxUpdateDepth)
+    public override bool SetBlockState(BlockPosition position, in BlockState state, BlockStateChangeFlags flags, int maxUpdateDepth)
     {
         bool changed = base.SetBlockState(position, state, flags, maxUpdateDepth);
 

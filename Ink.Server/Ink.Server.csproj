@@ -6,6 +6,15 @@
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
+
+    <EventSourceSupport>true</EventSourceSupport>
+
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <GCLargePages>true</GCLargePages>
+    <GCNoAffinitize>true</GCNoAffinitize>
+    <GCHeapHardLimit>0</GCHeapHardLimit>
+    <GCHeapCount>8</GCHeapCount>
+    <RetainVMGarbageCollection>true</RetainVMGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +29,8 @@
 
   <ItemGroup>
     <PackageReference Include="ConcurrentHashSet" Version="1.3.0" />
+
+    <PackageReference Include="NetEscapades.EnumGenerators" Version="1.0.0-beta11" PrivateAssets="all" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />
     <PackageReference Include="Rena.Mathematics" Version="1.3.0" />
   </ItemGroup>

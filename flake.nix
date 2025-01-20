@@ -13,6 +13,7 @@
     {
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
+          DOTNET_ROOT = "${pkgs.dotnet-sdk}/share/dotnet";
           packages = with pkgs; [
             dotnetCorePackages.sdk_9_0
             dotnetPackages.Nuget

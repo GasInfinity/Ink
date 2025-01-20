@@ -1,6 +1,6 @@
 ﻿namespace Ink.Blocks.State;
 
-public static class Properties
+public static class PropertyNames
 {
     public const string Facing = "facing";
     public const string Axis = "axis";

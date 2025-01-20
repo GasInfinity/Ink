@@ -2,8 +2,7 @@ namespace Ink.Text;
 
 public record TextStyle(bool? Bold = null, bool? Italic = null, bool? Underlined = null, bool? Strikethrough = null, bool? Obfucated = null, TextColor? Color = null, string? Font = null, string? Insertion = null, ClickEvent? ClickEvent = null, HoverEvent? HoverEvent = null)
 {
-    public static TextStyle Empty
-        => new();
+    public static readonly TextStyle Empty = new();
 
     public readonly bool? Bold = Bold;
     public readonly bool? Italic = Italic;

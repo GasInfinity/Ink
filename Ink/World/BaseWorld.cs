@@ -107,7 +107,7 @@ public abstract class BaseWorld : ITickable, IDisposable
     {
     }
 
-    public bool CanPlaceAt(BlockPosition position, in BlockStateChild state, Block block, out Entity? possibleCollidingEntity)
+    public bool CanPlaceAt(BlockPosition position, in BlockState state, Block block, out Entity? possibleCollidingEntity)
     {
         if (!IsInBuildLimit(position))
         {
@@ -148,7 +148,7 @@ public abstract class BaseWorld : ITickable, IDisposable
 
     public bool BreakBlock(BlockPosition position, bool dropStacks, Entity? breakingEntity, int maxUpdateDepth)
     {
-        BlockStateChild lastState = GetBlockState(position);
+        BlockState lastState = GetBlockState(position);
         Block? block = lastState.GetBlock(BlockRegistry);
 
         // TODO: Fluid state
@@ -168,13 +168,13 @@ public abstract class BaseWorld : ITickable, IDisposable
 
     public bool RemoveBlock(BlockPosition position, bool move)
     {
-        BlockStateChild lastState = GetBlockState(position);
+        BlockState lastState = GetBlockState(position);
 
         // TODO: Fluid state
         return SetBlockState(position, default, BlockStateChangeFlags.NotifyAll | (move ? BlockStateChangeFlags.Moved : 0));
     }
 
-    public virtual bool SetBlockState(BlockPosition position, in BlockStateChild state, BlockStateChangeFlags flags, int maxUpdateDepth)
+    public virtual bool SetBlockState(BlockPosition position, in BlockState state, BlockStateChangeFlags flags, int maxUpdateDepth)
     {
         int minY = CachedDimensionType.MinY;
 
@@ -195,20 +195,20 @@ public abstract class BaseWorld : ITickable, IDisposable
         if(state == lastStateId)
             return false;
 
-        BlockStateChild lastState = BlockStates.GetState(lastStateId.RegistryId);
+        BlockState lastState = BlockStates.GetState(lastStateId.RegistryId);
         Block? block = lastState.GetBlock(BlockRegistry);
 
         block?.OnStateReplaced(lastState, this, position, state, flags.HasFlag(BlockStateChangeFlags.Moved));
         return true;
     }
 
-    public bool SetBlockState(BlockPosition position, in BlockStateChild state, BlockStateChangeFlags flags)
+    public bool SetBlockState(BlockPosition position, in BlockState state, BlockStateChangeFlags flags)
         => SetBlockState(position, state, flags, 0); // TODO: Default maxUpdateDepth
 
-    public bool SetBlockState(BlockPosition position, in BlockStateChild state)
+    public bool SetBlockState(BlockPosition position, in BlockState state)
         => SetBlockState(position, state, BlockStateChangeFlags.NotifyAll);
 
-    public BlockStateChild GetBlockState(BlockPosition position)
+    public BlockState GetBlockState(BlockPosition position)
     {
         int minY = CachedDimensionType.MinY;
 
