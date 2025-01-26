@@ -3,8 +3,8 @@ using Ink.Chat;
 using Ink.Entities;
 using Ink.Entities.Damage;
 using Ink.Items;
-using Ink.World;
-using Ink.World.Biomes;
+using Ink.Worlds;
+using Ink.Worlds.Biomes;
 
 namespace Ink.Registries;
 

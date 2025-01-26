@@ -1,7 +1,7 @@
 ﻿using Ink.Nbt;
 using Ink.Nbt.Serialization;
 using Ink.Registries;
-using Ink.World;
+using Ink.Worlds;
 
 namespace Ink.Util.Converter.Nbt;
 

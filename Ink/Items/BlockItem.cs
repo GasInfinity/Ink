@@ -5,7 +5,7 @@ using Ink.Items;
 using Ink.Math;
 using Ink.Registries;
 using Ink.Util;
-using Ink.World;
+using Ink.Worlds;
 
 namespace Ink.Vanilla.Items;
 
@@ -19,7 +19,7 @@ public sealed class BlockItem : Item
     public BlockItem(Block block)
         => Block = block;
 
-    public override ActionResult<ItemStack> UseOnBlock(ItemStack stack, PlayerEntity player, BaseWorld world, BlockPosition location, BlockFace face, float cursorX, float cursorY, float cursorZ, bool insideBlock)
+    public override ActionResult<ItemStack> UseOnBlock(ItemStack stack, PlayerEntity player, World world, BlockPosition location, BlockFace face, float cursorX, float cursorY, float cursorZ, bool insideBlock)
     {
         ItemPlacementContext context = new(player, face, cursorX, cursorY, cursorZ);
 
@@ -36,7 +36,7 @@ public sealed class BlockItem : Item
         return ActionResult<ItemStack>.Success(stack); // TODO!
     }
 
-    private bool TryPlace(in ItemPlacementContext context, PlayerEntity player, BaseWorld world, BlockPosition location)
+    private bool TryPlace(in ItemPlacementContext context, PlayerEntity player, World world, BlockPosition location)
     {
         BlockState lastState = world.GetBlockState(location);
         Block? lastStateBlock = lastState.GetBlock(world.BlockRegistry);
@@ -53,7 +53,7 @@ public sealed class BlockItem : Item
             return false;
 
         world.SetBlockState(location, state);
-        Block.OnPlaced(world, location, state, player, default);
+        Block.OnPlaced(world, location, state, player.Living, default);
         return true;
     }
 }

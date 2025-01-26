@@ -4,10 +4,9 @@ using Ink.Entities;
 using Ink.Entities.Damage;
 using Ink.Event.Registry;
 using Ink.Items;
-using Ink.Net.Structures;
 using Ink.Registries;
-using Ink.World;
-using Ink.World.Biomes;
+using Ink.Worlds;
+using Ink.Worlds.Biomes;
 using System.Collections.Immutable;
 
 namespace Ink.Server;

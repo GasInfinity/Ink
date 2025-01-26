@@ -1,10 +1,10 @@
-﻿using Ink.Server.Entities;
-using Ink.World;
+﻿using Ink.Server.Net;
+using Ink.Server.Worlds;
 
 namespace Ink.Server.Event;
 
-public record struct LoginEvent(ServerPlayerEntity Player)
+public record struct LoginEvent(ServerNetworkConnection Connection)
 {
-    public readonly ServerPlayerEntity Player = Player;
-    public BaseWorld? AssignedWorld = null;
+    public readonly ServerNetworkConnection Connection = Connection;
+    public ServerWorld? AssignedWorld = null;
 }

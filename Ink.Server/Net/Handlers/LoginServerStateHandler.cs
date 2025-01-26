@@ -41,12 +41,12 @@ public sealed class LoginServerStateHandler : ServerPacketStateHandler
             c.Token = RandomNumberGenerator.GetBytes(ServerConstants.ConnectionTokenLength);
             ctx.Profile = new(packet.PlayerUuid, packet.Name);
 
-            // if(false)
-            // {
-            //     c.State = State.WaitingAck;
-            //     connection.Send(new ClientboundLoginFinished(ctx.Profile.Id, ctx.Profile.Name, ctx.Profile.Properties));
-            //     return;
-            // }
+            if(true)
+            {
+                c.State = State.WaitingAck;
+                connection.Send(new ClientboundLoginFinished(ctx.Profile));
+                return;
+            }
 
             c.State = State.Key;
             connection.Send(new ClientboundHello(string.Empty, ctx.ServerKeyring.PublicKey, c.Token, false));

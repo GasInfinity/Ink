@@ -195,7 +195,7 @@ public static class PacketProcessor
                 using Ink.Chat;
                 using Ink.Math;
                 using Ink.Items;
-                using Ink.World;
+                using Ink.Worlds;
                 using Ink.Resources;
                 using Ink.Nbt.Tags;
                 using Ink.Registries;

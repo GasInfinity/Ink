@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
+    <!-- <PublishAot>true</PublishAot> -->
     <InvariantGlobalization>true</InvariantGlobalization>
 
     <EventSourceSupport>true</EventSourceSupport>
@@ -29,6 +29,8 @@
 
   <ItemGroup>
     <PackageReference Include="ConcurrentHashSet" Version="1.3.0" />
+    <PackageReference Include="Friflo.Engine.ECS" Version="3.0.1" />
+    <PackageReference Include="Friflo.Engine.ECS.Boost" Version="3.0.1" />
 
     <PackageReference Include="NetEscapades.EnumGenerators" Version="1.0.0-beta11" PrivateAssets="all" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />

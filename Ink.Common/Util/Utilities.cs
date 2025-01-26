@@ -1,9 +1,14 @@
+using System.Buffers;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.ObjectPool;
+using Rena.Native.Buffers;
 
 namespace Ink.Util;
 
 public static class Utilities
 {
+    public static readonly ObjectPool<PooledArrayBufferWriter<byte>> SharedBufferWriters = new DefaultObjectPool<PooledArrayBufferWriter<byte>>(new PooledBufferWriterObjectPolicy<ArrayPool<byte>>(ArrayPool<byte>.Shared));
+
     public static int Modulo(int value, int mod)
         => (value % mod + mod) % mod;
 

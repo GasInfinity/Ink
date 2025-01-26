@@ -1,7 +1,7 @@
 ﻿using Ink.Nbt;
 using Ink.Nbt.Serialization;
 using Ink.Registries;
-using Ink.World.Biomes;
+using Ink.Worlds.Biomes;
 
 namespace Ink.Util.Converter.Nbt;
 

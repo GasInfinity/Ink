@@ -33,30 +33,16 @@ public sealed record Direction
 
     public static Direction FromRotation(float yaw)
     {
-        int wrapped360 = (int)yaw % 360;
-
-        if (wrapped360 < 0) // Return the opposite
+        int wrapped360 = ((int)yaw % 360) is int clampedYaw && clampedYaw < 0 ? clampedYaw + 360 : clampedYaw;
+        
+        return wrapped360 switch
         {
-            return -wrapped360 switch
-            {
-                > 315 => South,
-                > 225 => West,
-                > 135 => North,
-                > 45 => East,
-                _ => South
-            };
-        }
-        else
-        {
-            return wrapped360 switch
-            {
-                > 315 => South,
-                > 225 => East,
-                > 135 => North,
-                > 45 => West,
-                _ => South
-            };
-        }
+            > 315 => South,
+            > 225 => East,
+            > 135 => North,
+            > 45 => West,
+            _ => South
+        };
     }
 
     public static Direction FromRotations(float yaw, float pitch)

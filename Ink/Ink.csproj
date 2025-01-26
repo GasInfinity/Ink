@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.0" />
+    <PackageReference Include="Friflo.Engine.ECS" Version="3.0.1" />
     <PackageReference Include="Ink.Nbt" Version="0.2.2" />
 
     <PackageReference Include="Rena.Mathematics" Version="1.3.0" />
@@ -19,7 +20,6 @@
     <PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
 
     <PackageReference Include="NetEscapades.EnumGenerators" Version="1.0.0-beta11" PrivateAssets="all" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.0" />
 
     <PackageReference Include="ZlibSharp" Version="1.2.13.4" />
   </ItemGroup>

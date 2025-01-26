@@ -11,8 +11,8 @@ public class Program // TODO Refactor this!!
 {
     public static void Main()
     {
-        // ProcessPackets();
-        ProcessBlocks();
+        ProcessPackets();
+        // ProcessBlocks();
         //ProcessRegistries();
 
         GC.Collect(2);

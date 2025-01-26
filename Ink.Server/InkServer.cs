@@ -1,6 +1,6 @@
 ﻿using Ink.Server.Event;
 using Ink.Server.Net;
-using Ink.Server.World;
+using Ink.Server.Worlds;
 using Ink.Util;
 using Microsoft.Extensions.Logging;
 
@@ -29,11 +29,17 @@ public sealed class InkServer : IAsyncTickable
 
         this.connectionGameHandler = new(RegistryManager, options.LoginListener);
         ConnectionHandler = new ServerNetworkManager(this.connectionGameHandler, options.NetworkOptions, factory);
+
+        Console.CancelKeyPress += (object? o, ConsoleCancelEventArgs e) => {
+            e.Cancel = true;
+            this.stopSource.Cancel();
+        };
     }
 
     public async Task RunAsync()
     {
         await Task.WhenAll(ConnectionHandler.AcceptClientsAsync(stopSource.Token), LoopAsync());
+        Console.WriteLine("Exiting...");
     }
 
     public ValueTask TickAsync()

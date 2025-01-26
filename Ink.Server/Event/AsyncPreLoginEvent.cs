@@ -2,11 +2,8 @@
 
 namespace Ink.Server.Event;
 
-public readonly record struct PreLoginEvent
+public readonly record struct PreLoginEvent(ServerNetworkConnection Connection, string Username)
 {
-    public ServerNetworkConnection Connection { get; init; }
-    public string Username { get; init; }
-
-    public PreLoginEvent(ServerNetworkConnection connection, string username)
-        => (Connection, Username) = (connection, username);
+    public readonly ServerNetworkConnection Connection = Connection;
+    public readonly string Username = Username;
 }

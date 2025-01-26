@@ -4,7 +4,7 @@ using Ink.Items;
 using Ink.Math;
 using Ink.Registries;
 using Ink.Util;
-using Ink.World;
+using Ink.Worlds;
 
 namespace Ink.Blocks;
 
@@ -25,39 +25,39 @@ public class Block : IHasLocation
     public virtual BlockState ComputePlacementState(in ItemPlacementContext context)
         => DefaultState;
 
-    public virtual bool CanPlaceAt(BaseWorld world, BlockPosition position)
+    public virtual bool CanPlaceAt(World world, BlockPosition position)
         => world.IsValid(position);
 
     public virtual bool CanReplace(in BlockState state, in ItemPlacementContext context)
         => BlockSettings.IsReplaceable;
 
-    public virtual void OnStateReplaced(in BlockState state, BaseWorld world, BlockPosition position, in BlockState newState, bool moved)
+    public virtual void OnStateReplaced(in BlockState state, World world, BlockPosition position, in BlockState newState, bool moved)
     {
     }
 
-    public virtual void OnBlockAdded(in BlockState state, BaseWorld world, BlockPosition position, in BlockState oldState, bool notify)
+    public virtual void OnBlockAdded(in BlockState state, World world, BlockPosition position, in BlockState oldState, bool notify)
     {
     }
 
-    public virtual void OnPlaced(BaseWorld world, BlockPosition position, BlockState state, LivingEntity placer, ItemStack stack)
+    public virtual void OnPlaced(World world, BlockPosition position, BlockState state, LivingEntity placer, ItemStack stack)
     {
     }
 
-    public virtual void OnBreak(BaseWorld world, BlockPosition position, BlockState state, PlayerEntity player)
+    public virtual void OnBreak(World world, BlockPosition position, BlockState state, PlayerEntity player)
     {
     }
 
-    public virtual Collider GetCollider(in BlockState state, BaseWorld world, BlockPosition position)
+    public virtual Collider GetCollider(in BlockState state, World world, BlockPosition position)
     {
         return BlockSettings.IsCollidable ? Collider.Cube : Collider.Empty;
     }
 
-    public virtual float GetSlipperiness(in BlockState state, BaseWorld world, BlockPosition position)
+    public virtual float GetSlipperiness(in BlockState state, World world, BlockPosition position)
     {
         return BlockSettings.Slipperiness;
     }
 
-    public virtual ActionResult OnUse(in BlockState state, BaseWorld world, BlockPosition position, PlayerEntity player, Hand hand)
+    public virtual ActionResult OnUse(in BlockState state, World world, BlockPosition position, PlayerEntity player, Hand hand)
     {
         return ActionResult.Pass;
     }

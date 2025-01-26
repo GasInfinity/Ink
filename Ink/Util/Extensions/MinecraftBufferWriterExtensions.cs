@@ -72,13 +72,14 @@ public static class MinecraftBufferWriterExtensions
 
     public static void WriteJsonJUtf8<T>(this IBufferWriter<byte> writer, T value, JsonTypeInfo<T> typeInfo)
     {
-        using PooledArrayBufferWriter<byte> bufferWriter = new(ArrayPool<byte>.Shared);
+        PooledArrayBufferWriter<byte> bufferWriter = Utilities.SharedBufferWriters.Get();
 
         using (Utf8JsonWriter jsonWriter = new(bufferWriter))
             JsonSerializer.Serialize<T>(jsonWriter, value, typeInfo);
 
         writer.WriteVarInteger(bufferWriter.WrittenCount);
         writer.Write(bufferWriter.WrittenSpan);
+        Utilities.SharedBufferWriters.Return(bufferWriter);
     }
 
     public static void WriteNbt(this IBufferWriter<byte> writer, RootTag root)

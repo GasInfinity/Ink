@@ -3,7 +3,7 @@ using Ink.Entities;
 using Ink.Items;
 using Ink.Math;
 using Ink.Util;
-using Ink.World;
+using Ink.Worlds;
 
 namespace Ink.Blocks;
 
@@ -22,7 +22,7 @@ public class DoorBlock : Block
                            .WithProperty(PropertyNames.Hinge, ((hDirection.Axis == Direction.Axes.X) ? (context.CursorZ > 0.5f) : (context.CursorX < 0.5f)) ? DoorBlockHinge.Right : DoorBlockHinge.Left);
     }
 
-    public override bool CanPlaceAt(BaseWorld world, BlockPosition position)
+    public override bool CanPlaceAt(World world, BlockPosition position)
     {
         BlockPosition upper = position.Relative(y: 1);
         BlockPosition lower = position.Relative(y: -1);
@@ -40,12 +40,12 @@ public class DoorBlock : Block
         return base.CanPlaceAt(world, position);
     }
 
-    public override void OnPlaced(BaseWorld world, BlockPosition position, BlockState state, LivingEntity placer, ItemStack stack)
+    public override void OnPlaced(World world, BlockPosition position, BlockState state, LivingEntity placer, ItemStack stack)
     {
         world.SetBlockState(position.Relative(y: 1), state.WithProperty(PropertyNames.Half, TallBlockPart.Upper));
     }
 
-    public override void OnBreak(BaseWorld world, BlockPosition position, BlockState state, PlayerEntity player)
+    public override void OnBreak(World world, BlockPosition position, BlockState state, PlayerEntity player)
     {
         TallBlockPart part = state.GetProperty<TallBlockPart>(PropertyNames.Half);
 
@@ -57,7 +57,7 @@ public class DoorBlock : Block
         base.OnBreak(world, position, state, player);
     }
 
-    public override ActionResult OnUse(in BlockState state, BaseWorld world, BlockPosition position, PlayerEntity player, Hand hand)
+    public override ActionResult OnUse(in BlockState state, World world, BlockPosition position, PlayerEntity player, Hand hand)
     {
         TallBlockPart part = state.GetProperty<TallBlockPart>(PropertyNames.Half);
         bool open = state.GetProperty<bool>(PropertyNames.Open);

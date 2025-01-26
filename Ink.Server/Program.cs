@@ -1,14 +1,14 @@
 ﻿using Ink.Server;
-using Ink.World;
+using Ink.Worlds;
 using Ink.Chunks;
 using Ink.Registries;
 using Ink.Chat;
-using Ink.World.Biomes;
+using Ink.Worlds.Biomes;
 using Ink.Event.Registry;
 using Ink.Entities.Damage;
 using System.Text.Json;
 using Ink.Util;
-using Ink.Server.World;
+using Ink.Server.Worlds;
 using Ink.Server.Event;
 using System.Net;
 using Microsoft.Extensions.Logging;
@@ -18,6 +18,7 @@ using Ink.Vanilla.Blocks;
 using Ink.Vanilla.Items;
 using Ink.Entities;
 using System.Runtime;
+using Friflo.Engine.ECS;
 
 class Server : ILoginListener, IValueRegistrationListener<Item>, IValueRegistrationListener<Block>, IValueRegistrationListener<BiomeType>, IValueRegistrationListener<DimensionType>, IValueRegistrationListener<ChatType>, IValueRegistrationListener<DamageType>, IValueRegistrationListener<WolfVariant>, IValueRegistrationListener<PaintingVariant>
 {
@@ -67,7 +68,6 @@ class Server : ILoginListener, IValueRegistrationListener<Item>, IValueRegistrat
 
         ServerWorldManager worldManager = this.server.WorldManager;
         this.world = worldManager.CreateWorld(Identifier.Vanilla("test"));
-        worldManager.RegisterWorld(world);
     }
 
     public Task RunAsync()

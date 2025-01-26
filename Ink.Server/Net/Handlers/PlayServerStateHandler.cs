@@ -10,15 +10,16 @@ using Microsoft.Extensions.ObjectPool;
 using System.Collections.Concurrent;
 using Rena.Mathematics;
 using Ink.Util.Extensions;
-using static Ink.Server.Entities.ServerPlayerEntity;
 using Ink.Math;
 using Ink.Blocks.State;
-using Ink.Server.World;
+using Ink.Server.Worlds;
 using Ink.Blocks;
 using Ink.Util;
 using Ink.Items;
 using Ink.Net.Structures;
-using Ink.World;
+using Ink.Worlds;
+using Ink.Server.Entities.Components;
+using Ink.Entities.Components;
 
 namespace Ink.Server.Net.Handlers;
 
@@ -103,54 +104,66 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
     {
         public override void Handle(in ServerboundChat packet, IConnection connection, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            ctx.GameHandler.BroadcastPlay(new ClientboundSystemChat(TextPart.String(packet.Message), false));
+            ctx.GameHandler.Broadcast(new ClientboundSystemChat(TextPart.String(packet.Message), false));
         }
     }
 
     private sealed class ChunkBatchReceivedPacketExecutor : MainThreadPacketExecutor<ChunkBatchReceivedPacketExecutor, ServerboundChunkBatchReceived>
     {
         protected override void Run(in ServerboundChunkBatchReceived packet, ServerNetworkConnection.ServerConnectionContext ctx)
-            => ctx.Player!.AcknowledgeChunkBatch(packet.ChunksPerTick);
+        {
+            ref EntityChunkSenderComponent chunkSender = ref ctx.Player.ChunkSender;
+
+            chunkSender.MaxUnacknowledgedBatches = int.Max(chunkSender.MaxUnacknowledgedBatches, 10);
+
+            if(chunkSender.UnacknowledgedBatches <= 0)
+                return;
+
+            chunkSender.UnacknowledgedBatches--;
+            chunkSender.DesiredChunksPerTick = float.Max(packet.ChunksPerTick, 1);
+        }
     }
 
     private sealed class SwingArmPacketExecutor : MainThreadPacketExecutor<SwingArmPacketExecutor, ServerboundSwing>
     {
         protected override void Run(in ServerboundSwing packet, ServerNetworkConnection.ServerConnectionContext ctx)
-            => ctx.Player!.SetPlayerFlag(packet.Hand == (int)Hand.Main ? ServerPlayerEntity.ServerPlayerFlags.ClientSwingedMain : ServerPlayerEntity.ServerPlayerFlags.ClientSwingedOff);
+        {
+            // ctx.Player!.SetPlayerFlag(packet.Hand == (int)Hand.Main ? ServerPlayerEntity.ServerPlayerFlags.ClientSwingedMain : ServerPlayerEntity.ServerPlayerFlags.ClientSwingedOff);
+        }
     }
 
     private sealed class PlayerCommandPacketExecutor : MainThreadPacketExecutor<PlayerCommandPacketExecutor, ServerboundPlayerCommand>
     {
         protected override void Run(in ServerboundPlayerCommand packet, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            ServerPlayerEntity player = ctx.Player!;
-
-            if (player.EntityId != packet.EntityId) // TODO! Disconnect?
-                return;
-
-            switch ((PlayerCommandAction)packet.ActionId)
-            {
-                case PlayerCommandAction.StartSneaking:
-                    {
-                        player.IsSneaking = true;
-                        break;
-                    }
-                case PlayerCommandAction.StopSneaking:
-                    {
-                        player.IsSneaking = false;
-                        break;
-                    }
-                case PlayerCommandAction.StartSprinting:
-                    {
-                        player.IsSprinting = true;
-                        break;
-                    }
-                case PlayerCommandAction.StopSprinting:
-                    {
-                        player.IsSprinting = false;
-                        break;
-                    }
-            }
+            // ServerPlayerEntity player = ctx.Player!;
+            //
+            // if (player.EntityId != packet.EntityId) // TODO! Disconnect?
+            //     return;
+            //
+            // switch ((PlayerCommandAction)packet.ActionId)
+            // {
+            //     case PlayerCommandAction.StartSneaking:
+            //         {
+            //             player.IsSneaking = true;
+            //             break;
+            //         }
+            //     case PlayerCommandAction.StopSneaking:
+            //         {
+            //             player.IsSneaking = false;
+            //             break;
+            //         }
+            //     case PlayerCommandAction.StartSprinting:
+            //         {
+            //             player.IsSprinting = true;
+            //             break;
+            //         }
+            //     case PlayerCommandAction.StopSprinting:
+            //         {
+            //             player.IsSprinting = false;
+            //             break;
+            //         }
+            // }
         }
     }
 
@@ -158,41 +171,41 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
     {
         protected override void Run(in ServerboundPlayerAction packet, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            Context c = ctx.StateContext!.CastUnsafe<Context>();
-
-            ServerPlayerEntity player = ctx.Player!;
-            ServerWorld world = player.World;
-            c.LastBlockAcknowledge = packet.Sequence;
-
-            switch ((PlayerActionStatus)packet.Status)
-            {
-                case PlayerActionStatus.StartedDigging:
-                    {
-                        if (player.CurrentGameMode == GameMode.Creative)
-                        {
-                            player.TryBreakBlock(packet.Location);
-                        }
-
-                        break;
-                    }
-                case PlayerActionStatus.FinishedDigging:
-                    {
-                        player.TryBreakBlock(packet.Location);
-                        break;
-                    }
-                case PlayerActionStatus.DropItem:
-                    {
-                        ItemEntity entity = world.SpawnEntity<ItemEntity>(player.Position + new Vec3<double>(0, player.EyeHeight, 0));
-                        entity.Slot = new ItemStack(1, player[Ink.Containers.EquipmentSlot.MainHand].Id);
-                        entity.Velocity = player.HeadForwardVector * 0.4;
-                        break;
-                    }
-                case PlayerActionStatus.SwapHandItems:
-                    {
-                        (player.Inventory.HeldStack, player.Inventory.OffHandStack) = (player.Inventory.OffHandStack, player.Inventory.HeldStack);
-                        break;
-                    }
-            }
+            // Context c = ctx.StateContext!.CastUnsafe<Context>();
+            //
+            // ServerPlayerEntity player = ctx.Player!;
+            // ServerWorld world = player.World;
+            // c.LastBlockAcknowledge = packet.Sequence;
+            //
+            // switch ((PlayerActionStatus)packet.Status)
+            // {
+            //     case PlayerActionStatus.StartedDigging:
+            //         {
+            //             if (player.CurrentGameMode == GameMode.Creative)
+            //             {
+            //                 player.TryBreakBlock(packet.Location);
+            //             }
+            //
+            //             break;
+            //         }
+            //     case PlayerActionStatus.FinishedDigging:
+            //         {
+            //             player.TryBreakBlock(packet.Location);
+            //             break;
+            //         }
+            //     case PlayerActionStatus.DropItem:
+            //         {
+            //             ItemEntity entity = world.SpawnEntity<ItemEntity>(player.Position + new Vec3<double>(0, player.EyeHeight, 0));
+            //             entity.Slot = new ItemStack(1, player[Ink.Containers.EquipmentSlot.MainHand].Id);
+            //             entity.Velocity = player.HeadForwardVector * 0.4;
+            //             break;
+            //         }
+            //     case PlayerActionStatus.SwapHandItems:
+            //         {
+            //             (player.Inventory.HeldStack, player.Inventory.OffHandStack) = (player.Inventory.OffHandStack, player.Inventory.HeldStack);
+            //             break;
+            //         }
+            // }
         }
     }
 
@@ -200,46 +213,48 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
     {
         protected override void Run(in ServerboundMovePlayerPos packet, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            Context c = ctx.StateContext!.CastUnsafe<Context>();
-            ServerPlayerEntity player = ctx.Player!;
-
-            if (player.LastTeleportSent != c.LastTeleportReplied)
-                return;
-
-            Vec3<double> position = player.Position;
-
-            double newX = packet.X;
-            double newY = packet.FeetY;
-            double newZ = packet.Z;
-
-            double deltaX = newX - position.X;
-            double deltaY = newY - position.Y;
-            double deltaZ = newZ - position.Z;
-
-            if (deltaX.AlmostEqual(0) && deltaY.AlmostEqual(0) && deltaZ.AlmostEqual(0))
-                return; // Same position?
-
-            if(double.Abs(deltaX) > 8 || double.Abs(deltaZ) > 8 || double.Abs(deltaY) > 10)
-            {
-                player.SetPlayerFlag(ServerPlayerFlags.SyncronizePosition);
-                return;
-            }
-
-            player.Move(new(deltaX, deltaY, deltaZ));
-            Vec3<double> newServerPosition = player.Position;
-
-            double newDeltaX = newX - newServerPosition.X;
-            double newDeltaY = newY - newServerPosition.Y;
-            double newDeltaZ = newZ - newServerPosition.Z;
-
-            if(!newDeltaX.AlmostEqual(0) || !newDeltaY.AlmostEqual(0) || !newDeltaZ.AlmostEqual(0))
-            {
-                player.SetPlayerFlag(ServerPlayerFlags.SyncronizePosition);
-                return;
-            }
-
-            player.Position = new(newX, newY, newZ);
-            // TODO: Onground?
+            ref EntityTransformComponent transform = ref ctx.Player.Player.Living.Base.Transform;
+            transform.Position = new(packet.X, packet.FeetY, packet.Z);
+            // Context c = ctx.StateContext!.CastUnsafe<Context>();
+            // ServerPlayerEntity player = ctx.Player!;
+            //
+            // if (player.LastTeleportSent != c.LastTeleportReplied)
+            //     return;
+            //
+            // Vec3<double> position = player.Position;
+            //
+            // double newX = packet.X;
+            // double newY = packet.FeetY;
+            // double newZ = packet.Z;
+            //
+            // double deltaX = newX - position.X;
+            // double deltaY = newY - position.Y;
+            // double deltaZ = newZ - position.Z;
+            //
+            // if (deltaX.AlmostEqual(0) && deltaY.AlmostEqual(0) && deltaZ.AlmostEqual(0))
+            //     return; // Same position?
+            //
+            // if(double.Abs(deltaX) > 8 || double.Abs(deltaZ) > 8 || double.Abs(deltaY) > 10)
+            // {
+            //     player.SetPlayerFlag(ServerPlayerFlags.SyncronizePosition);
+            //     return;
+            // }
+            //
+            // player.Move(new(deltaX, deltaY, deltaZ));
+            // Vec3<double> newServerPosition = player.Position;
+            //
+            // double newDeltaX = newX - newServerPosition.X;
+            // double newDeltaY = newY - newServerPosition.Y;
+            // double newDeltaZ = newZ - newServerPosition.Z;
+            //
+            // if(!newDeltaX.AlmostEqual(0) || !newDeltaY.AlmostEqual(0) || !newDeltaZ.AlmostEqual(0))
+            // {
+            //     player.SetPlayerFlag(ServerPlayerFlags.SyncronizePosition);
+            //     return;
+            // }
+            //
+            // player.Position = new(newX, newY, newZ);
+            // // TODO: Onground?
         }
     }
 
@@ -247,26 +262,29 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
     {
         protected override void Run(in ServerboundMovePlayerRot packet, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            Context c = ctx.StateContext!.CastUnsafe<Context>();
-            ServerPlayerEntity player = ctx.Player!;
-
-            if (player.LastTeleportSent != c.LastTeleportReplied)
-                return;
-
-            Vec2<float> rotation = player.Rotation;
-
-            float newYaw = packet.Yaw;
-            float newPitch = packet.Pitch;
-
-            float deltaYaw = newYaw - rotation.X;
-            float deltaPitch = newPitch - rotation.Y;
-
-            if (deltaYaw.AlmostEqual(0) && deltaPitch.AlmostEqual(0))
-                return;
-
-            player.Rotation = new(newYaw, newPitch);
-            player.CurrentHeadYaw = newYaw;
-            // TODO: Onground?
+            ref EntityTransformComponent transform = ref ctx.Player.Player.Living.Base.Transform;
+            transform.Rotation = new(packet.Yaw, packet.Pitch);
+            transform.HeadYaw = packet.Yaw;
+            // Context c = ctx.StateContext!.CastUnsafe<Context>();
+            // ServerPlayerEntity player = ctx.Player!;
+            //
+            // if (player.LastTeleportSent != c.LastTeleportReplied)
+            //     return;
+            //
+            // Vec2<float> rotation = player.Rotation;
+            //
+            // float newYaw = packet.Yaw;
+            // float newPitch = packet.Pitch;
+            //
+            // float deltaYaw = newYaw - rotation.X;
+            // float deltaPitch = newPitch - rotation.Y;
+            //
+            // if (deltaYaw.AlmostEqual(0) && deltaPitch.AlmostEqual(0))
+            //     return;
+            //
+            // player.Rotation = new(newYaw, newPitch);
+            // player.CurrentHeadYaw = newYaw;
+            // // TODO: Onground?
         }
     }
 
@@ -274,54 +292,58 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
     {
         protected override void Run(in ServerboundMovePlayerPosRot packet, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            Context c = ctx.StateContext!.CastUnsafe<Context>();
-            ServerPlayerEntity player = ctx.Player!;
-
-            if (player.LastTeleportSent != c.LastTeleportReplied)
-                return;
-            
-            Vec3<double> position = player.Position;
-            Vec2<float> rotation = player.Rotation;
-
-            double newX = packet.X;
-            double newY = packet.FeetY;
-            double newZ = packet.Z;
-            float newYaw = packet.Yaw;
-            float newPitch = packet.Pitch;
-
-            float deltaYaw = newYaw - rotation.X;
-            float deltaPitch = newPitch - rotation.Y;
-            double deltaX = newX - position.X;
-            double deltaY = newY - position.Y;
-            double deltaZ = newZ - position.Z;
-
-            if (deltaX.AlmostEqual(0) && deltaY.AlmostEqual(0) && deltaZ.AlmostEqual(0) && deltaYaw.AlmostEqual(0) && deltaPitch.AlmostEqual(0))
-                return;
-            
-            if (double.Abs(deltaX) > 8 || double.Abs(deltaZ) > 8 || double.Abs(deltaY) > 10)
-            {
-                player.SetPlayerFlag(ServerPlayerFlags.SyncronizePosition);
-                return;
-            }
-
-            player.Move(new(deltaX, deltaY, deltaZ));
-            Vec3<double> newServerPosition = player.Position;
-
-            double newDeltaX = newX - newServerPosition.X;
-            double newDeltaY = newY - newServerPosition.Y;
-            double newDeltaZ = newZ - newServerPosition.Z;
-
-            if(!newDeltaX.AlmostEqual(0) || !newDeltaY.AlmostEqual(0) || !newDeltaZ.AlmostEqual(0))
-            {
-                player.SetPlayerFlag(ServerPlayerFlags.SyncronizePosition);
-                return;
-            }
-
-            player.Position = new(newX, newY, newZ);
-            player.Rotation = new(newYaw, newPitch);
-            player.CurrentHeadYaw = newYaw;
-
-            // TODO: Onground?
+            ref EntityTransformComponent transform = ref ctx.Player.Player.Living.Base.Transform;
+            transform.Position = new(packet.X, packet.FeetY, packet.Z);
+            transform.Rotation = new(packet.Yaw, packet.Pitch);
+            transform.HeadYaw = packet.Yaw;
+            // Context c = ctx.StateContext!.CastUnsafe<Context>();
+            // ServerPlayerEntity player = ctx.Player!;
+            //
+            // if (player.LastTeleportSent != c.LastTeleportReplied)
+            //     return;
+            // 
+            // Vec3<double> position = player.Position;
+            // Vec2<float> rotation = player.Rotation;
+            //
+            // double newX = packet.X;
+            // double newY = packet.FeetY;
+            // double newZ = packet.Z;
+            // float newYaw = packet.Yaw;
+            // float newPitch = packet.Pitch;
+            //
+            // float deltaYaw = newYaw - rotation.X;
+            // float deltaPitch = newPitch - rotation.Y;
+            // double deltaX = newX - position.X;
+            // double deltaY = newY - position.Y;
+            // double deltaZ = newZ - position.Z;
+            //
+            // if (deltaX.AlmostEqual(0) && deltaY.AlmostEqual(0) && deltaZ.AlmostEqual(0) && deltaYaw.AlmostEqual(0) && deltaPitch.AlmostEqual(0))
+            //     return;
+            // 
+            // if (double.Abs(deltaX) > 8 || double.Abs(deltaZ) > 8 || double.Abs(deltaY) > 10)
+            // {
+            //     player.SetPlayerFlag(ServerPlayerFlags.SyncronizePosition);
+            //     return;
+            // }
+            //
+            // player.Move(new(deltaX, deltaY, deltaZ));
+            // Vec3<double> newServerPosition = player.Position;
+            //
+            // double newDeltaX = newX - newServerPosition.X;
+            // double newDeltaY = newY - newServerPosition.Y;
+            // double newDeltaZ = newZ - newServerPosition.Z;
+            //
+            // if(!newDeltaX.AlmostEqual(0) || !newDeltaY.AlmostEqual(0) || !newDeltaZ.AlmostEqual(0))
+            // {
+            //     player.SetPlayerFlag(ServerPlayerFlags.SyncronizePosition);
+            //     return;
+            // }
+            //
+            // player.Position = new(newX, newY, newZ);
+            // player.Rotation = new(newYaw, newPitch);
+            // player.CurrentHeadYaw = newYaw;
+            //
+            // // TODO: Onground?
         }
     }
 
@@ -339,75 +361,77 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
     private sealed class SetCarriedItemPacketExecutor : MainThreadPacketExecutor<SetCarriedItemPacketExecutor, ServerboundSetCarriedItem>
     {
         protected override void Run(in ServerboundSetCarriedItem packet, ServerNetworkConnection.ServerConnectionContext ctx)
-            => ctx.Player!.AcknowledgeHeldSlot(packet.Slot);
+        {
+            // ctx.Player!.AcknowledgeHeldSlot(packet.Slot);
+        }
     }
 
     private sealed class UseItemOnPacketExecutor : MainThreadPacketExecutor<UseItemOnPacketExecutor, ServerboundUseItemOn>
     {
         protected override void Run(in ServerboundUseItemOn packet, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            Context c = ctx.StateContext!.CastUnsafe<Context>();
-            ServerPlayerEntity player = ctx.Player!;
-            ServerWorld world = player.World;
-            c.LastBlockAcknowledge = packet.Sequence;
-
-            BlockPosition position = packet.Location;
-            Hand hand = (Hand)packet.Hand;
-
-            if (!player.IsSneaking)
-            {
-                BlockState state = world.GetBlockState(position);
-                Block? block = state.GetBlock(world.BlockRegistry);
-
-                ActionResult blockUseResult = block?.OnUse(state, world, position, player, hand) ?? ActionResult.Pass;
-
-                if (blockUseResult.SwingsHand())
-                    player.Swing(Hand.Main);
-
-                if (blockUseResult != ActionResult.Pass)
-                    return;
-            }
-
-            ItemStack main = player.Inventory.HeldStack;
-
-            if (!main.IsEmpty)
-            {
-                Item? mainItem = main.Item(world.RegistryManager.Item);
-
-                ActionResult<ItemStack> mainItemResult = mainItem?.UseOnBlock(main, player, world, packet.Location, (BlockFace)packet.Face, packet.CursorPositionX, packet.CursorPositionY, packet.CursorPositionZ, packet.InsideBlock) ?? ActionResult<ItemStack>.Pass;
-
-                if (mainItemResult.Result.SwingsHand())
-                    player.Swing(Hand.Main);
-
-                if (mainItemResult.Result.PerformsAction())
-                {
-                    player.Inventory.HeldStack = mainItemResult.Value;
-                    return;
-                }
-
-                if (mainItemResult.Result != ActionResult.Pass)
-                    return;
-            }
-
-            ItemStack off = player.Inventory.OffHandStack;
-
-            if (!off.IsEmpty)
-            {
-                Item? offItem = off.Item(world.RegistryManager.Item);
-                ActionResult<ItemStack> offItemResult = offItem?.UseOnBlock(main, player, world, packet.Location, (BlockFace)packet.Face, packet.CursorPositionX, packet.CursorPositionY, packet.CursorPositionZ, packet.InsideBlock) ?? ActionResult<ItemStack>.Pass;
-
-                if (offItemResult.Result.SwingsHand())
-                    player.Swing(Hand.Main);
-
-                if (offItemResult.Result.PerformsAction())
-                {
-                    player.Inventory.OffHandStack = offItemResult.Value;
-                    return;
-                }
-
-                if (offItemResult.Result != ActionResult.Pass)
-                    return;
-            }
+            // Context c = ctx.StateContext!.CastUnsafe<Context>();
+            // ServerPlayerEntity player = ctx.Player!;
+            // ServerWorld world = player.World;
+            // c.LastBlockAcknowledge = packet.Sequence;
+            //
+            // BlockPosition position = packet.Location;
+            // Hand hand = (Hand)packet.Hand;
+            //
+            // if (!player.IsSneaking)
+            // {
+            //     BlockState state = world.GetBlockState(position);
+            //     Block? block = state.GetBlock(world.BlockRegistry);
+            //
+            //     ActionResult blockUseResult = block?.OnUse(state, world, position, player, hand) ?? ActionResult.Pass;
+            //
+            //     if (blockUseResult.SwingsHand())
+            //         player.Swing(Hand.Main);
+            //
+            //     if (blockUseResult != ActionResult.Pass)
+            //         return;
+            // }
+            //
+            // ItemStack main = player.Inventory.HeldStack;
+            //
+            // if (!main.IsEmpty)
+            // {
+            //     Item? mainItem = main.Item(world.RegistryManager.Item);
+            //
+            //     ActionResult<ItemStack> mainItemResult = mainItem?.UseOnBlock(main, player, world, packet.Location, (BlockFace)packet.Face, packet.CursorPositionX, packet.CursorPositionY, packet.CursorPositionZ, packet.InsideBlock) ?? ActionResult<ItemStack>.Pass;
+            //
+            //     if (mainItemResult.Result.SwingsHand())
+            //         player.Swing(Hand.Main);
+            //
+            //     if (mainItemResult.Result.PerformsAction())
+            //     {
+            //         player.Inventory.HeldStack = mainItemResult.Value;
+            //         return;
+            //     }
+            //
+            //     if (mainItemResult.Result != ActionResult.Pass)
+            //         return;
+            // }
+            //
+            // ItemStack off = player.Inventory.OffHandStack;
+            //
+            // if (!off.IsEmpty)
+            // {
+            //     Item? offItem = off.Item(world.RegistryManager.Item);
+            //     ActionResult<ItemStack> offItemResult = offItem?.UseOnBlock(main, player, world, packet.Location, (BlockFace)packet.Face, packet.CursorPositionX, packet.CursorPositionY, packet.CursorPositionZ, packet.InsideBlock) ?? ActionResult<ItemStack>.Pass;
+            //
+            //     if (offItemResult.Result.SwingsHand())
+            //         player.Swing(Hand.Main);
+            //
+            //     if (offItemResult.Result.PerformsAction())
+            //     {
+            //         player.Inventory.OffHandStack = offItemResult.Value;
+            //         return;
+            //     }
+            //
+            //     if (offItemResult.Result != ActionResult.Pass)
+            //         return;
+            // }
         }
     }
 
@@ -415,50 +439,50 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
     {
         protected override void Run(in ServerboundUseItem packet, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            Context c = ctx.StateContext!.CastUnsafe<Context>();
-            ServerPlayerEntity player = ctx.Player!;
-            ServerWorld world = player.World;
-            c.LastBlockAcknowledge = packet.Sequence;
-
-            ItemStack main = player.Inventory.HeldStack;
-
-            if (!main.IsEmpty)
-            {
-                Item? mainitem = main.Item(world.RegistryManager.Item);
-                ActionResult<ItemStack> mainItemResult = mainitem?.Use(main, world, player) ?? ActionResult<ItemStack>.Pass;
-
-                if (mainItemResult.Result.SwingsHand())
-                    player.Swing(Hand.Main);
-
-                if (mainItemResult.Result.PerformsAction())
-                {
-                    player.Inventory.HeldStack = mainItemResult.Value;
-                    return;
-                }
-
-                if (mainItemResult.Result != ActionResult.Pass)
-                    return;
-            }
-
-            ItemStack off = player.Inventory.OffHandStack;
-
-            if (!off.IsEmpty)
-            {
-                Item? offItem = off.Item(world.RegistryManager.Item);
-                ActionResult<ItemStack> offItemResult = offItem?.Use(main, world, player) ?? ActionResult<ItemStack>.Pass;
-
-                if (offItemResult.Result.SwingsHand())
-                    player.Swing(Hand.Main);
-
-                if (offItemResult.Result.PerformsAction())
-                {
-                    player.Inventory.OffHandStack = offItemResult.Value;
-                    return;
-                }
-
-                if (offItemResult.Result != ActionResult.Pass)
-                    return;
-            }
+            // Context c = ctx.StateContext!.CastUnsafe<Context>();
+            // ServerPlayerEntity player = ctx.Player!;
+            // ServerWorld world = player.World;
+            // c.LastBlockAcknowledge = packet.Sequence;
+            //
+            // ItemStack main = player.Inventory.HeldStack;
+            //
+            // if (!main.IsEmpty)
+            // {
+            //     Item? mainitem = main.Item(world.RegistryManager.Item);
+            //     ActionResult<ItemStack> mainItemResult = mainitem?.Use(main, world, player) ?? ActionResult<ItemStack>.Pass;
+            //
+            //     if (mainItemResult.Result.SwingsHand())
+            //         player.Swing(Hand.Main);
+            //
+            //     if (mainItemResult.Result.PerformsAction())
+            //     {
+            //         player.Inventory.HeldStack = mainItemResult.Value;
+            //         return;
+            //     }
+            //
+            //     if (mainItemResult.Result != ActionResult.Pass)
+            //         return;
+            // }
+            //
+            // ItemStack off = player.Inventory.OffHandStack;
+            //
+            // if (!off.IsEmpty)
+            // {
+            //     Item? offItem = off.Item(world.RegistryManager.Item);
+            //     ActionResult<ItemStack> offItemResult = offItem?.Use(main, world, player) ?? ActionResult<ItemStack>.Pass;
+            //
+            //     if (offItemResult.Result.SwingsHand())
+            //         player.Swing(Hand.Main);
+            //
+            //     if (offItemResult.Result.PerformsAction())
+            //     {
+            //         player.Inventory.OffHandStack = offItemResult.Value;
+            //         return;
+            //     }
+            //
+            //     if (offItemResult.Result != ActionResult.Pass)
+            //         return;
+            // }
         }
     }
 
@@ -466,12 +490,12 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
     {
         protected override void Run(in ServerboundSetCreativeModeSlot packet, ServerNetworkConnection.ServerConnectionContext ctx)
         {
-            ServerPlayerEntity player = ctx.Player!;
-
-            if(!player.PlayerViewHandler.TryHandleCreativeSetSlot(packet))
-            {
-                // Event / Kick, Invalid!
-            }
+            // ServerPlayerEntity player = ctx.Player!;
+            //
+            // if(!player.PlayerViewHandler.TryHandleCreativeSetSlot(packet))
+            // {
+            //     // Event / Kick, Invalid!
+            // }
         }
     }
 
@@ -502,9 +526,7 @@ public sealed class PlayServerStateHandler : ServerKeptAlivePacketStateHandler
         base.Setup(connection, ctx);
 
         ctx.StateContext = new Context();
-
-        ctx.AllocatePlayer();
-        ctx.GameHandler.AddPlaying(ctx.Connection);
+        ctx.GameHandler.QueuePlaying(ctx.Connection);
     }
 
     public override void Tick(IConnection connection, ServerNetworkConnection.ServerConnectionContext ctx)

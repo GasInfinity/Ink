@@ -12,8 +12,8 @@ public readonly record struct ItemPlacementContext(PlayerEntity PlacingPlayer, B
     public readonly float CursorZ = CursorZ;
 
     public Direction HorizontalPlayerDirection
-        => PlacingPlayer.HorizontalDirection;
+        => Direction.FromRotation(PlacingPlayer.Living.Base.HeadYaw);
 
     public Direction PlayerDirection
-        => PlacingPlayer.Direction;
+        => Direction.FromRotations(PlacingPlayer.Living.Base.HeadYaw, PlacingPlayer.Living.Base.Rotation.Y);
 }

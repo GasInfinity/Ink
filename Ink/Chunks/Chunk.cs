@@ -122,7 +122,7 @@ public struct Chunk : IDisposable
 
     public readonly void Write(IBufferWriter<byte> writer)
     {
-        using PooledArrayBufferWriter<byte> sectionWriter = new(ArrayPool<byte>.Shared);
+        using PooledArrayBufferWriter<byte> sectionWriter = Utilities.SharedBufferWriters.Get();
 
         for (int i = 0; i < this.sections.Length; ++i)
         {
@@ -134,6 +134,7 @@ public struct Chunk : IDisposable
         writer.Write(sectionWriter.WrittenSpan);
 
         writer.WriteVarInteger(0); // TODO!: BlockEntities
+        Utilities.SharedBufferWriters.Return(sectionWriter);
     }
 
     public readonly void WriteLight(IBufferWriter<byte> writer)

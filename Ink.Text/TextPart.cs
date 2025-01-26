@@ -11,7 +11,7 @@ public record struct TextPart(IPartContent? Content = null, TextStyle? Style = n
     public readonly ImmutableArray<TextPart> Extra = Extra;
 
     public static TextPart Empty()
-        => new();
+        => new(StringPartContent.Empty);
 
     public static TextPart String(string content)
         => new(new StringPartContent(content));

@@ -6,6 +6,8 @@ using Ink.Server.Event;
 using Ink.Net.Packets.Play;
 using Ink.Text;
 using Ink.Util;
+using Ink.Worlds;
+using Ink.Net.Structures;
 
 namespace Ink.Server.Net;
 
@@ -34,9 +36,9 @@ public sealed class ServerNetworkGameManager : ITickable
         this.loginListener = loginListener;
     }
 
-    public void AddPlaying(ServerNetworkConnection connection)
+    public void QueuePlaying(ServerNetworkConnection context)
     {
-        this.playingLimboConnections.Add(connection);
+        this.playingLimboConnections.Add(context);
     }
 
     public void RemovePlaying(ServerNetworkConnection connection)
@@ -47,7 +49,7 @@ public sealed class ServerNetworkGameManager : ITickable
         }
     }
 
-    public void BroadcastPlay<TPacket>(TPacket packet)
+    public void Broadcast<TPacket>(TPacket packet)
         where TPacket : struct, IPacket<TPacket>
     {
         foreach (ServerNetworkConnection connection in this.playingConnections)
@@ -56,7 +58,7 @@ public sealed class ServerNetworkGameManager : ITickable
         }
     }
 
-    public void BroadcastPlayExcept<TPacket>(TPacket packet, ServerNetworkConnection except)
+    public void BroadcastExcept<TPacket>(TPacket packet, ServerNetworkConnection except)
         where TPacket : struct, IPacket<TPacket>
     {
         foreach (ServerNetworkConnection connection in this.playingConnections)
@@ -83,8 +85,8 @@ public sealed class ServerNetworkGameManager : ITickable
             if (!connection.IsConnected)
                 continue;
 
-            ServerPlayerEntity? playerEntity = connection.Player!;
-            LoginEvent e = new(playerEntity);
+            // ServerPlayerEntity? playerEntity = connection.Player!;
+            LoginEvent e = new();
 
             this.loginListener.OnLogin(ref e);
 
@@ -100,8 +102,62 @@ public sealed class ServerNetworkGameManager : ITickable
             if(!this.playingConnections.Add(connection))
                 continue; // FIXME: Throw exception, this should NEVER happen?
 
-            playerEntity.Initialize(e.AssignedWorld);
-            e.AssignedWorld.AddEntity(playerEntity);
+            // playerEntity.Initialize(e.AssignedWorld);
+            RemotePlayerEntity remotePlayer = e.AssignedWorld.SpawnRemotePlayerEntity(connection);
+            remotePlayer.Player.CurrentGameMode = GameMode.Creative;
+            connection.AssignPlayer(remotePlayer);
+
+            // TODO: Move this to another method or something, there's something off about this class...
+            connection.Send(new ClientboundLogin(
+                EntityId: remotePlayer.Player.Living.Base.NetworkId,
+                IsHardcore: false,
+                DimensionNames: RegistryManager.DimensionType.Keys.ToArray(),
+                MaxPlayers: 0,
+                ViewDistance: remotePlayer.ViewDistance,
+                SimulationDistance: 4,
+                ReducedDebugInfo: false,
+                EnableRespawnScreen: true,
+                DoLimitedCrafting: false,
+                DimensionType: RegistryManager.DimensionType.GetId(e.AssignedWorld.Dimension),
+                DimensionName: e.AssignedWorld.Dimension,
+                HashedSeed: 0,
+                GameMode: remotePlayer.Player.CurrentGameMode,
+                PreviousGameMode: GameMode.Undefined,
+                IsDebug: false,
+                IsFlat: false,
+                HasDeathLocation: false,
+                DeathDimensionName: null,
+                DeathLocation: null,
+                PortalCooldown: 0,
+                SeaLevel: 64,
+                EnforcesSecureChat: false
+            ));
+
+            connection.Send(new ClientboundGameEvent(13, 0)); // TODO: Enum (StartWaitingForLevelChunks)
+
+            // TODO: Make this configurable, should we broadcast inside the world or serverwide? etc...
+            Broadcast(new ClientboundPlayerInfoUpdate(new PlayersInfo(
+                Actions: PlayersInfo.Action.AddPlayer | PlayersInfo.Action.UpdateListed | PlayersInfo.Action.UpdateGameMode,
+                Players: [new PlayersInfo.Info(Profile: remotePlayer.Player.Profile, Listed: true, GameMode: remotePlayer.Player.CurrentGameMode)]
+            )));
+
+            // FIXME: This is temporal, move to a non allcating solution
+            PlayersInfo.Info[] allConnected = new PlayersInfo.Info[this.playingConnections.Count - 1];
+            int i = 0;
+            foreach(ServerNetworkConnection otherConnection in this.playingConnections)
+            {
+                if(connection == otherConnection)
+                    continue;
+
+                RemotePlayerEntity otherRemotePlayer = otherConnection.Player;
+                allConnected[i] = new PlayersInfo.Info(Profile: otherRemotePlayer.Player.Profile, Listed: true, GameMode: otherRemotePlayer.Player.CurrentGameMode);
+            }
+
+            connection.Send(new ClientboundPlayerInfoUpdate(new PlayersInfo(
+                Actions: PlayersInfo.Action.AddPlayer | PlayersInfo.Action.UpdateListed | PlayersInfo.Action.UpdateGameMode,
+                Players: allConnected
+            )));
+
             ++handledPlayers;
         }
     }
@@ -111,16 +167,17 @@ public sealed class ServerNetworkGameManager : ITickable
         if (this.stoppedPlayingConnections.IsEmpty)
             return;
 
-        List<Uuid> playersRemoved = new List<Uuid>(this.stoppedPlayingConnections.Count);
+        Uuid[] playersRemoved = new Uuid[this.stoppedPlayingConnections.Count];
 
-        while(this.stoppedPlayingConnections.TryTake(out ServerNetworkConnection? connection))
+        int i = 0;
+        while(i < playersRemoved.Length
+        && this.stoppedPlayingConnections.TryTake(out ServerNetworkConnection? connection))
         {
-            ServerPlayerEntity player = connection.Player!;
-            player.Remove();
-
-            playersRemoved.Add(player.Uuid);
+            RemotePlayerEntity remotePlayer = connection.Player;
+            playersRemoved[i] = remotePlayer.Player.Living.Base.Id;
+            remotePlayer.Entity.Enabled = false;
         }
 
-        BroadcastPlay(new ClientboundPlayerInfoRemove(playersRemoved.ToArray()));
+        Broadcast(new ClientboundPlayerInfoRemove(playersRemoved.ToArray()));
     }
 }

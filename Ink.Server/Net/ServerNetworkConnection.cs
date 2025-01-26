@@ -19,7 +19,7 @@ public sealed class ServerNetworkConnection : NetworkConnection<ServerNetworkCon
         public RSAKeyring ServerKeyring => Connection.serverKeyring;
         public ILogger Logger => Connection.logger;
         public ServerNetworkGameManager GameHandler => Connection.gameHandler;
-        public ServerPlayerEntity? Player => Connection.player;
+        public RemotePlayerEntity Player => Connection.player;
 
         public MinecraftProtocol ProtocolVersion = MinecraftProtocol.Base;
         public string ClientBrand = string.Empty;
@@ -39,14 +39,6 @@ public sealed class ServerNetworkConnection : NetworkConnection<ServerNetworkCon
 
         public void EnableEncryption(byte[] sharedSecret)
             => Connection.EnableEncryption(sharedSecret);
-
-        public void AllocatePlayer()
-        {
-            if(Player == null)
-            {
-                Connection.player = new ServerPlayerEntity(this, Profile);
-            }
-        }
     }
 
     private static ConnectionPacketHandler<ServerConnectionContext> ServerConnectionPacketHandler = new((new Dictionary<NetworkState, PacketStateHandler<ServerConnectionContext>>()
@@ -64,13 +56,16 @@ public sealed class ServerNetworkConnection : NetworkConnection<ServerNetworkCon
     private readonly ServerConnectionContext context;
     private readonly ServerNetworkGameManager gameHandler;
     private readonly RSAKeyring serverKeyring;
-    private ServerPlayerEntity? player = null;
+    private RemotePlayerEntity player;
 
     public ServerNetworkGameManager GameHandler
         => this.gameHandler;
-
-    public ServerPlayerEntity? Player
+    
+    public RemotePlayerEntity Player
         => this.player;
+
+    public ServerConnectionContext Context
+        => this.context;
 
     public ServerNetworkConnection(ConnectionContext context, ServerNetworkGameManager gameHandler, RSAKeyring serverKeyring, ILoggerFactory logger) : base(context, ServerConnectionPacketHandler, logger)
     {
@@ -78,6 +73,9 @@ public sealed class ServerNetworkConnection : NetworkConnection<ServerNetworkCon
         this.serverKeyring = serverKeyring;
         this.context = new(this);
     }
+
+    public void AssignPlayer(RemotePlayerEntity player)
+        => this.player = player;
 
     protected override ServerConnectionContext ProvideHandlerContext()
         => this.context;

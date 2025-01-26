@@ -1,8 +1,11 @@
-﻿using Ink.Registries;
+﻿using Friflo.Engine.ECS.Systems;
+using Ink.Registries;
+using Ink.Server.Worlds.Systems;
 using Ink.Util;
+using Ink.Worlds;
 using System.Collections.Concurrent;
 
-namespace Ink.Server.World
+namespace Ink.Server.Worlds
 {
     public sealed class ServerWorldManager : ITickable
     {
@@ -17,24 +20,22 @@ namespace Ink.Server.World
         }
 
         public ServerWorld CreateWorld(Identifier dimensionName)
-            => new(registryManager, registryManager.Block, registryManager.DimensionType, dimensionName);
+            => CreateWorld((Uuid)Guid.NewGuid(), dimensionName);
 
         public ServerWorld CreateWorld(Uuid uuid, Identifier dimensionName)
-            => new (uuid, registryManager, registryManager.Block, registryManager.DimensionType, dimensionName);
-
-        public void RegisterWorld(ServerWorld world)
         {
-            _ = this.worlds.TryAdd(world.Uuid, world);
-        }
+            DimensionType dimensionType = registryManager.DimensionType.Get(dimensionName)
+                            ?? throw new ArgumentException($"Dimension '{dimensionName}' not found inside dimensions registry");
 
-        public void UnregisterWorld(Uuid worldUuid)
-        {
-            _ = this.worlds.TryRemove(worldUuid, out _);
-        }
+            ServerChunkManager chunkManager = new(dimensionType);
+            ServerWorld world = new (uuid, chunkManager, registryManager, registryManager.Block, registryManager.DimensionType, dimensionName);
 
-        public void UnregisterWorld(ServerWorld world)
-        {
-            _ = this.worlds.TryRemove(world.Uuid, out _);
+            if(!this.worlds.TryAdd(uuid, world))
+            {
+                throw new NotSupportedException(); // TODO: Duplicated uuid
+            }
+
+            return world;
         }
 
         public void Tick()
@@ -44,6 +45,7 @@ namespace Ink.Server.World
 
             try
             {
+                // TODO: Research if all worlds could be ticked in pararell
                 foreach (var world in worlds.Values)
                 {
                     world.Tick();

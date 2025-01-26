@@ -1,6 +1,4 @@
 ﻿using Ink.Chunks.Pallete;
-using Ink.Registries;
-using Ink.World.Biomes;
 
 namespace Ink.Chunks;
 

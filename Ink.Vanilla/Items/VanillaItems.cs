@@ -34,5 +34,5 @@ public static class VanillaItems
     public static readonly BlockItem Ice = new(VanillaBlocks.Ice);
     public static readonly BlockItem BlueIce = new(VanillaBlocks.BlueIce);
 
-    public static readonly SpawnEggItem<TestEntity> TestSpawnEgg = new(new("minecraft", "cow_spawn_egg"));
+    // public static readonly SpawnEggItem<TestEntity> TestSpawnEgg = new(new("minecraft", "cow_spawn_egg"));
 }

@@ -8,47 +8,68 @@ using Ink.Server.Net;
 using Ink.Registries;
 using Ink.Server.Entities;
 using Ink.Util;
-using Ink.World;
+using Ink.Worlds;
 using Rena.Mathematics;
 using System.Collections.Concurrent;
+using Friflo.Engine.ECS;
+using Ink.Server.Entities.Components;
+using Ink.Net;
+using Friflo.Engine.ECS.Systems;
+using Ink.Server.Worlds.Systems;
 
-namespace Ink.Server.World;
+namespace Ink.Server.Worlds;
 
-public sealed class ServerWorld : BaseWorld
+public sealed class ServerWorld : World
 {
     const int SyncBlockUpdatesClearInterval = 200;
 
-    private readonly ConcurrentDictionary<int, ServerPlayerEntity> worldPlayers = new();
     private readonly ConcurrentBag<(int, WorldEvent, BlockPosition, int)> syncWorldEvents = [];
     private readonly Dictionary<SectionPosition, ConcurrentBag<SectionBlockUpdate>> syncBlockUpdates = new();
-    private readonly EntityManager entityManager = new();
 
-    public IEnumerable<ServerPlayerEntity> Players
-        => this.worldPlayers.Select(kv => kv.Value); // TODO: Optimized ConcurrentDictionary? .Values allocates each time its called
+    private readonly ArchetypeQuery<EntityRemotePlayerComponent> remotePlayersQuery;
+    private readonly ArchetypeQuery<EntityRemotePlayerComponent, EntityChunkViewerComponent> chunkRemotePlayersQuery;
 
-    protected override EntityManager EntityManager
-        => this.entityManager;
+    public readonly EntityStore Entities;
+    public readonly SystemRoot Systems;
+
+    private long ticks;
 
     public readonly ServerRegistryManager RegistryManager;
-    public ServerWorld(Uuid uuid, ServerRegistryManager registryManager, FrozenRegistry<Block> blockRegistry, FrozenRegistry<DimensionType> dimensionRegistry, Identifier dimension) : base(WorldFlags.None, uuid, blockRegistry, dimensionRegistry, dimension)
+    public readonly ServerChunkManager ChunkManager;
+
+    public ServerWorld(Uuid uuid, ServerChunkManager chunkManager, ServerRegistryManager registryManager, FrozenRegistry<Block> blockRegistry, FrozenRegistry<DimensionType> dimensionRegistry, Identifier dimension) : base(chunkManager, WorldFlags.None, uuid, blockRegistry, dimensionRegistry, dimension)
     {
+        Entities = new();
+        Systems = new(Entities) {
+            new SystemGroup("common") {
+                new RemoveSyncedEntitySystem(),
+                new RemoveRemotePlayerSystem(),
+                new DeletionSystem(),
+                new ChunkViewingSystem(),
+                new ViewingSystem(),
+                new EntitySyncingSystem(),
+                new SyncSpawnPositionSystem(),
+                new SyncChunkCacheCenterSystem(),
+            },
+            new ChunkSenderSystem(this),
+            new TransformToLastSystem(),
+        };
+
+        this.remotePlayersQuery = Entities.Query<EntityRemotePlayerComponent>();
+        this.chunkRemotePlayersQuery = Entities.Query<EntityRemotePlayerComponent, EntityChunkViewerComponent>();
+
+        Systems.SetMonitorPerf(true);
         RegistryManager = registryManager;
+        ChunkManager = chunkManager;
     }
 
-    public ServerWorld(ServerRegistryManager registryManager, FrozenRegistry<Block> blockRegistry, FrozenRegistry<DimensionType> dimensionRegistry, Identifier dimension) : base(WorldFlags.None, blockRegistry, dimensionRegistry, dimension)
+    public RemotePlayerEntity SpawnRemotePlayerEntity(ServerNetworkConnection connection)
     {
-        RegistryManager = registryManager;
+        return new(RemotePlayerEntity.Create(Entities.Batch(), connection).CreateEntity());
     }
 
-    public override TEntity SpawnEntity<TEntity>(in Vec3<double> spawnPosition)
-    {
-        TEntity entity = TEntity.Create(DefaultEntityTrackerFactory.Shared); // TODO: This shouldn't be like this!
-        entity.SetWorld(this, spawnPosition, default);
-        return entity;
-    }
-
-    public override void SyncWorldEvent(Entity? entity, WorldEvent id, BlockPosition position, int data)
-        => this.syncWorldEvents.Add(((entity?.EntityId ?? 0) + 1, id, position, data));
+    // public override void SyncWorldEvent(InkEntity? entity, WorldEvent id, BlockPosition position, int data)
+    //     => this.syncWorldEvents.Add(((entity?.EntityId ?? 0) + 1, id, position, data));
 
     public override bool SetBlockState(BlockPosition position, in BlockState state, BlockStateChangeFlags flags, int maxUpdateDepth)
     {
@@ -62,6 +83,10 @@ public sealed class ServerWorld : BaseWorld
 
     protected override void LogicSyncTick()
     {
+        Systems.Update(default);
+        Console.Clear();
+        Console.WriteLine(Systems.GetPerfLog());
+        Console.WriteLine($"{GC.GetTotalMemory(false) / 1024f / 1024f:N3}MiB/{GC.GetTotalAllocatedBytes(false) / 1024f / 1024f:N3}MiB (GC Pause since server start: {GC.GetTotalPauseDuration()})");
         HandleWorldEvents();
 
         foreach (KeyValuePair<SectionPosition, ConcurrentBag<SectionBlockUpdate>> syncSectionUpdates in this.syncBlockUpdates)
@@ -69,23 +94,6 @@ public sealed class ServerWorld : BaseWorld
 
         if ((this.worldAge % SyncBlockUpdatesClearInterval) == 0) // Do not store unused ConcurrentBags!
             this.syncBlockUpdates.Clear();
-    }
-
-    public override void AddEntity(Entity entity)
-    {
-        base.AddEntity(entity);
-
-        if (entity is ServerPlayerEntity player)
-        {
-            _ = this.worldPlayers.TryAdd(entity.EntityId, player);
-        }
-    }
-
-    public override void RemoveEntity(Entity entity)
-    {
-        base.RemoveEntity(entity);
-
-        _ = this.worldPlayers.Remove(entity.EntityId, out _);
     }
 
     private void AddSyncBlockUpdate(BlockPosition position, StateStorage state)
@@ -121,14 +129,15 @@ public sealed class ServerWorld : BaseWorld
             int blockState = blockUpdate.BlockState;
 
             ClientboundBlockUpdate singleUpdatePacket = new(absoluteBlockPosition, blockState);
-            foreach (ServerPlayerEntity player in Players)
-            {
-                if (!player.IsChunkViewed(chunkPosition))
-                    continue;
-
-                ServerNetworkConnection connection = player.NetworkContext.Connection;
-                connection.Send(singleUpdatePacket);
-            }
+            Entities.Query();
+            // foreach (ServerPlayerEntity player in Players)
+            // {
+            //     if (!player.IsChunkViewed(chunkPosition))
+            //         continue;
+            //
+            //     ServerNetworkConnection connection = player.NetworkContext.Connection;
+            //     connection.Send(singleUpdatePacket);
+            // }
 
             return;
         }
@@ -140,14 +149,14 @@ public sealed class ServerWorld : BaseWorld
             rawSectionBlockUpdates[i++] = blockUpdate.Raw;
 
         ClientboundSectionBlocksUpdate updatePacket = new(position, rawSectionBlockUpdates);
-        foreach (ServerPlayerEntity player in Players)
-        {
-            if (!player.IsChunkViewed(chunkPosition))
-                continue;
-
-            ServerNetworkConnection connection = player.NetworkContext.Connection;
-            connection.Send(updatePacket);
-        }
+        // foreach (ServerPlayerEntity player in Players)
+        // {
+        //     if (!player.IsChunkViewed(chunkPosition))
+        //         continue;
+        //
+        //     ServerNetworkConnection connection = player.NetworkContext.Connection;
+        //     connection.Send(updatePacket);
+        // }
     }
 
     private void HandleWorldEvents()
@@ -160,28 +169,28 @@ public sealed class ServerWorld : BaseWorld
             int initiatorEntityId = data.Item1 - 1;
             ChunkPosition eventChunkLocation = position.ToChunkPosition();
 
-            if (initiatorEntityId == -1)
-            {
-                foreach (ServerPlayerEntity player in Players)
-                {
-                    if (!player.IsChunkViewed(eventChunkLocation))
-                        continue;
-
-                    ServerNetworkConnection connection = player.NetworkContext.Connection;
-                    // connection.Send(packet);
-                }
-            }
-            else
-            {
-                foreach (ServerPlayerEntity player in Players)
-                {
-                    if (player.EntityId == initiatorEntityId || !player.IsChunkViewed(eventChunkLocation))
-                        continue;
-
-                    ServerNetworkConnection connection = player.NetworkContext.Connection;
-                    // connection.Send(packet);
-                }
-            }
+            // if (initiatorEntityId == -1)
+            // {
+            //     foreach (ServerPlayerEntity player in Players)
+            //     {
+            //         if (!player.IsChunkViewed(eventChunkLocation))
+            //             continue;
+            //
+            //         ServerNetworkConnection connection = player.NetworkContext.Connection;
+            //         // connection.Send(packet);
+            //     }
+            // }
+            // else
+            // {
+            //     foreach (ServerPlayerEntity player in Players)
+            //     {
+            //         if (player.EntityId == initiatorEntityId || !player.IsChunkViewed(eventChunkLocation))
+            //             continue;
+            //
+            //         ServerNetworkConnection connection = player.NetworkContext.Connection;
+            //         // connection.Send(packet);
+            //     }
+            // }
         }
     }
 }
