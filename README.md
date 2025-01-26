@@ -1,6 +1,8 @@
 # ✒️ Ink
 Yet another minecraft server impementation. (in C#!)
 
+![Screenshot of entity sync](https://github.com/GasInfinity/Ink/blob/main/docs/images/ecs-sync.png?raw=true)
+
 📖 Little history about this:
   - I started this in summer of 2023 after I turned 17 just for fun, inspired by another C# server implementation [Obsidian](https://github.com/ObsidianMC/Obsidian) and a "library" to make minecraft servers [Minestom](https://minestom.net/). I thought I could implement a simple server with just Kestrel sockets and Pipelines (And I did!)
   - Well, after the initial steam went off I had basic entity/player syncing with equipment and meta, basic chunk sending, basic registries w/data driven types that get sent to the client and basic block/item interactions. Literally stopped after seeing that mojang changed the entire protocol from 1.20.1 to 1.20.2, I was very lazy to redo ALL the work I did in two weeks...
