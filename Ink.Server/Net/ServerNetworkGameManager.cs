@@ -85,9 +85,7 @@ public sealed class ServerNetworkGameManager : ITickable
             if (!connection.IsConnected)
                 continue;
 
-            // ServerPlayerEntity? playerEntity = connection.Player!;
-            LoginEvent e = new();
-
+            LoginEvent e = new(connection);
             this.loginListener.OnLogin(ref e);
 
             if (!connection.IsConnected) // Maybe kicked?
@@ -102,7 +100,6 @@ public sealed class ServerNetworkGameManager : ITickable
             if(!this.playingConnections.Add(connection))
                 continue; // FIXME: Throw exception, this should NEVER happen?
 
-            // playerEntity.Initialize(e.AssignedWorld);
             RemotePlayerEntity remotePlayer = e.AssignedWorld.SpawnRemotePlayerEntity(connection);
             remotePlayer.Player.CurrentGameMode = GameMode.Creative;
             connection.AssignPlayer(remotePlayer);
