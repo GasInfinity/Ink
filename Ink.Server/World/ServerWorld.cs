@@ -129,7 +129,6 @@ public sealed class ServerWorld : World
             int blockState = blockUpdate.BlockState;
 
             ClientboundBlockUpdate singleUpdatePacket = new(absoluteBlockPosition, blockState);
-            Entities.Query();
             // foreach (ServerPlayerEntity player in Players)
             // {
             //     if (!player.IsChunkViewed(chunkPosition))
